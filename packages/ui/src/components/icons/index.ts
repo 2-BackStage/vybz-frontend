@@ -13,5 +13,4 @@ export { Reels } from './Reels';
 export { ChevronLeft } from './ChevronLeft';
 export { Check } from './Check';
 export { Camera } from './Camera';
-export { X } from './X';
-
+export { X } from './x';
