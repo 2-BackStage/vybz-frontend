@@ -131,6 +131,8 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_USER_PROJECT_ID }}
           working-directory: ./apps/user
           vercel-args: '--prod'
+        env:
+          NEXTAUTH_URL: ${{ secrets.USER_NEXTAUTH_URL }}
 
       - name: Deploy Busker App (if changed or forced)
         if: contains(steps.changed-apps.outputs.changed_apps, 'busker') || steps.changed-apps.outputs.has_changes == 'false' || steps.force-deploy.outputs.force_deploy == 'true'
@@ -141,6 +143,8 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_BUSKER_PROJECT_ID }}
           working-directory: ./apps/busker
           vercel-args: '--prod'
+        env:
+          NEXTAUTH_URL: ${{ secrets.BUSKER_NEXTAUTH_URL }}
 
       - name: Deploy Admin App (if changed or forced)
         if: contains(steps.changed-apps.outputs.changed_apps, 'admin') || steps.changed-apps.outputs.has_changes == 'false' || steps.force-deploy.outputs.force_deploy == 'true'
@@ -151,6 +155,8 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_ADMIN_PROJECT_ID }}
           working-directory: ./apps/admin
           vercel-args: '--prod'
+        env:
+          NEXTAUTH_URL: ${{ secrets.ADMIN_NEXTAUTH_URL }}
 
       - name: Run smoke tests
         run: |

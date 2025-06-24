@@ -146,7 +146,7 @@ jobs:
           # User App
           if [[ "${{ steps.changed-apps.outputs.changed_apps }}" == *"user"* ]] || [[ "${{ steps.changed-apps.outputs.has_changes }}" == "false" ]] || [[ "${{ steps.force-deploy.outputs.force_deploy }}" == "true" ]]; then
             echo "Building and pushing User app..."
-            docker build -t $DOCKER_REGISTRY/vybz-user:$IMAGE_TAG -f apps/user/Dockerfile .
+            docker build -t $DOCKER_REGISTRY/vybz-user:$IMAGE_TAG -f apps/user/Dockerfile . --build-arg NEXTAUTH_URL=${{ secrets.USER_NEXTAUTH_URL }}
             docker push $DOCKER_REGISTRY/vybz-user:$IMAGE_TAG
             docker tag $DOCKER_REGISTRY/vybz-user:$IMAGE_TAG $DOCKER_REGISTRY/vybz-user:latest
             docker push $DOCKER_REGISTRY/vybz-user:latest
@@ -155,7 +155,7 @@ jobs:
           # Busker App
           if [[ "${{ steps.changed-apps.outputs.changed_apps }}" == *"busker"* ]] || [[ "${{ steps.changed-apps.outputs.has_changes }}" == "false" ]] || [[ "${{ steps.force-deploy.outputs.force_deploy }}" == "true" ]]; then
             echo "Building and pushing Busker app..."
-            docker build -t $DOCKER_REGISTRY/vybz-busker:$IMAGE_TAG -f apps/busker/Dockerfile .
+            docker build -t $DOCKER_REGISTRY/vybz-busker:$IMAGE_TAG -f apps/busker/Dockerfile . --build-arg NEXTAUTH_URL=${{ secrets.BUSKER_NEXTAUTH_URL }}
             docker push $DOCKER_REGISTRY/vybz-busker:$IMAGE_TAG
             docker tag $DOCKER_REGISTRY/vybz-busker:$IMAGE_TAG $DOCKER_REGISTRY/vybz-busker:latest
             docker push $DOCKER_REGISTRY/vybz-busker:latest
@@ -164,7 +164,7 @@ jobs:
           # Admin App
           if [[ "${{ steps.changed-apps.outputs.changed_apps }}" == *"admin"* ]] || [[ "${{ steps.changed-apps.outputs.has_changes }}" == "false" ]] || [[ "${{ steps.force-deploy.outputs.force_deploy }}" == "true" ]]; then
             echo "Building and pushing Admin app..."
-            docker build -t $DOCKER_REGISTRY/vybz-admin:$IMAGE_TAG -f apps/admin/Dockerfile .
+            docker build -t $DOCKER_REGISTRY/vybz-admin:$IMAGE_TAG -f apps/admin/Dockerfile . --build-arg NEXTAUTH_URL=${{ secrets.ADMIN_NEXTAUTH_URL }}
             docker push $DOCKER_REGISTRY/vybz-admin:$IMAGE_TAG
             docker tag $DOCKER_REGISTRY/vybz-admin:$IMAGE_TAG $DOCKER_REGISTRY/vybz-admin:latest
             docker push $DOCKER_REGISTRY/vybz-admin:latest
