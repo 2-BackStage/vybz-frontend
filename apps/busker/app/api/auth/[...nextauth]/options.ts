@@ -19,8 +19,9 @@ export const options: NextAuthOptions = {
 
         //console.log('credentials', credentials);
         try {
+          const apiUrl = process.env.BASE_API_URL || 'http://localhost:8080';
           const response = await fetch(
-            `${process.env.BASE_API_URL}/busker-auth-service/api/v1/busker/sign-in`,
+            `${apiUrl}/busker-auth-service/api/v1/busker/sign-in`,
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -42,12 +43,12 @@ export const options: NextAuthOptions = {
       },
     }),
     KakaoProvider({
-      clientId: process.env.KAKAO_CLIENT_ID || '',
-      clientSecret: process.env.KAKAO_CLIENT_SECRET || '',
+      clientId: process.env.KAKAO_CLIENT_ID || 'dummy-client-id',
+      clientSecret: process.env.KAKAO_CLIENT_SECRET || 'dummy-client-secret',
     }),
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      clientId: process.env.GOOGLE_CLIENT_ID || 'dummy-client-id',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'dummy-client-secret',
     }),
   ],
   callbacks: {
@@ -92,8 +93,9 @@ export const options: NextAuthOptions = {
       try {
         const userInfo = getUserInfo();
 
+        const apiUrl = process.env.BASE_API_URL || 'http://localhost:8080';
         const res = await fetch(
-          `${process.env.BASE_API_URL}/user-auth-service/api/v1/oauth/sign-in`,
+          `${apiUrl}/user-auth-service/api/v1/oauth/sign-in`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -127,13 +129,31 @@ export const options: NextAuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      const isInternalUrl = url.startsWith(baseUrl);
+      // URL 검증 및 안전한 리다이렉트 처리
+      try {
+        // baseUrl이 유효한지 확인
+        if (!baseUrl || baseUrl === 'undefined' || baseUrl === 'null') {
+          console.warn('Invalid baseUrl detected, using fallback');
+          baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3001';
+        }
 
-      if (isInternalUrl && url !== baseUrl) {
-        return url;
+        // URL이 유효한지 확인
+        if (!url || url === 'undefined' || url === 'null') {
+          console.warn('Invalid url detected, redirecting to main');
+          return `${baseUrl}/main`;
+        }
+
+        const isInternalUrl = url.startsWith(baseUrl);
+
+        if (isInternalUrl && url !== baseUrl) {
+          return url;
+        }
+
+        return `${baseUrl}/main`;
+      } catch (error) {
+        console.error('Redirect error:', error);
+        return `${process.env.NEXTAUTH_URL || 'http://localhost:3001'}/main`;
       }
-
-      return `${baseUrl}/main`;
     },
   },
   pages: {
