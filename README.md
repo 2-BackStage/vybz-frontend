@@ -126,8 +126,8 @@ CI/CD 파이프라인을 위해 다음 GitHub Secrets를 설정해야 합니다:
 - `VERCEL_ADMIN_PROJECT_ID`
 
 ### Docker Hub 관련
-- `DOCKERHUB_USERNAME`: Docker Hub 사용자명
-- `DOCKERHUB_TOKEN`: Docker Hub 액세스 토큰
+- `DOCKER_HUB_USERNAME`: Docker Hub 사용자명
+- `DOCKER_HUB_PASSWORD`: Docker Hub 액세스 토큰
 
 ### EC2 관련
 - `EC2_HOST`

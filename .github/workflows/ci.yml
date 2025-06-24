@@ -164,12 +164,36 @@ jobs:
           fi
         env:
           NODE_ENV: production
+          NEXTAUTH_URL: https://example.com
+          NEXTAUTH_SECRET: dummy-secret-for-build
+          KAKAO_CLIENT_ID: dummy-kakao-client-id
+          KAKAO_CLIENT_SECRET: dummy-kakao-client-secret
+          GOOGLE_CLIENT_ID: dummy-google-client-id
+          GOOGLE_CLIENT_SECRET: dummy-google-client-secret
+          BASE_API_URL: https://api.example.com
+          ANALYZE: false
+          AWS_REGION: us-east-1
+          AWS_ACCESS_KEY_ID: dummy-access-key
+          AWS_SECRET_ACCESS_KEY: dummy-secret-key
+          AWS_S3_BUCKET_NAME: dummy-bucket
 
       - name: Build all applications (if no changes detected)
         if: steps.changed-apps.outputs.has_changes == 'false'
         run: pnpm build
         env:
           NODE_ENV: production
+          NEXTAUTH_URL: https://example.com
+          NEXTAUTH_SECRET: dummy-secret-for-build
+          KAKAO_CLIENT_ID: dummy-kakao-client-id
+          KAKAO_CLIENT_SECRET: dummy-kakao-client-secret
+          GOOGLE_CLIENT_ID: dummy-google-client-id
+          GOOGLE_CLIENT_SECRET: dummy-google-client-secret
+          BASE_API_URL: https://api.example.com
+          ANALYZE: false
+          AWS_REGION: us-east-1
+          AWS_ACCESS_KEY_ID: dummy-access-key
+          AWS_SECRET_ACCESS_KEY: dummy-secret-key
+          AWS_S3_BUCKET_NAME: dummy-bucket
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

@@ -51,6 +51,8 @@ export const options: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'dummy-client-secret',
     }),
   ],
+  // Ensure NEXTAUTH_URL is set for build time
+  ...(process.env.NEXTAUTH_URL && { url: process.env.NEXTAUTH_URL }),
   callbacks: {
     async signIn({ user, account, profile }) {
       if (!profile) {
