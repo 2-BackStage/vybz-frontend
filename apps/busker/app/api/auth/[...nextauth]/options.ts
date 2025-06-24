@@ -109,7 +109,7 @@ export const options: NextAuthOptions = {
         const data = (await res.json()) as CommonResponseType<UserDataType>;
         user.accessToken = data.result.accessToken;
         user.refreshToken = data.result.refreshToken;
-        user.userUuid = data.result.userUuid;
+        user.buskerUuid = data.result.userUuid;
 
         return true;
       } catch (error) {
@@ -126,7 +126,7 @@ export const options: NextAuthOptions = {
         ...session.user,
         accessToken: token.accessToken as string,
         refreshToken: token.refreshToken as string,
-        userUuid: token.userUuid as string,
+        buskerUuid: token.buskerUuid as string,
       };
       return session;
     },

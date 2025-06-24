@@ -5,14 +5,14 @@ declare module 'next-auth' {
     user: {
       accessToken: string,
       refreshToken: string,
-      userUuid: string,
+      buskerUuid: string,
     } & DefaultSession['user'];
   }
 
   interface User extends DefaultUser {
     accessToken?: string;
     refreshToken?: string;
-    userUuid?: string;
+    buskerUuid?: string;
   }
 
   interface Profile {

@@ -7,7 +7,7 @@ import { Badge } from '@repo/ui/components/ui';
 import Link from 'next/link';
 import Image from 'next/image';
 
-export default function MainHeader() {
+export default function MainHeader({ userUrl }: { userUrl: string }) {
   return (
     <header className="bg-div-background border-div-background px-6 py-4 flex items-center justify-between space-x-6 text-white font-poppins">
       <div className="flex items-center space-x-4 flex-1">
@@ -44,7 +44,7 @@ export default function MainHeader() {
           BUSKER ADMIN
         </Badge>
         <Avatar className="size-10 ring-2 ring-blue-300">
-          <AvatarImage src="/buskerUrl.jpg" />
+          <AvatarImage src={userUrl} />
           <AvatarFallback className="bg-blue-300 text-gray-900 font-semibold">
             BuskerProfile
           </AvatarFallback>

@@ -8,8 +8,8 @@ export type FormContextType = {
   setBuskerProfileUrl: (url: string) => void;
   artistName: string;
   setArtistName: (name: string) => void;
-  artistGenre: Category | '';
-  setArtistGenre: (genre: Category | '') => void;
+  artistGenre: number[];
+  setArtistGenre: (genre: number[]) => void;
   artistDescription: string;
   setArtistDescription: (description: string) => void;
 };

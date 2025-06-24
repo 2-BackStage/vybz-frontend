@@ -64,7 +64,6 @@ export default function AvatarUploader({ userUuid }: { userUuid: string }) {
       <input
         ref={fileInputRef}
         id="avatar-upload"
-        name="avatar"
         type="file"
         accept="image/*"
         className="hidden"

@@ -2,7 +2,7 @@
 
 import { createContext, useState } from 'react';
 import { BuskerDataType } from '@/types/ResponseDataTypes';
-import { FormContextType, Category } from '@/types/ConstextTypes';
+import { FormContextType } from '@/types/ConstextTypes';
 
 export const FormContext = createContext<FormContextType>(
   {} as FormContextType
@@ -19,8 +19,8 @@ export function UseForm({
     initialData.profileImage || ''
   );
   const [artistName, setArtistName] = useState(initialData.name || '');
-  const [artistGenre, setArtistGenre] = useState<Category | ''>(
-    initialData.genre || ''
+  const [artistGenre, setArtistGenre] = useState<number[]>(
+    initialData.genre.map((genre) => Number(genre)) || []
   );
   const [artistDescription, setArtistDescription] = useState(
     initialData.description || ''

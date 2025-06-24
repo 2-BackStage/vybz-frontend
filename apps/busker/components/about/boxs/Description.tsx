@@ -19,6 +19,7 @@ export default function Description() {
         className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
         onChange={(e) => setArtistDescription(e.target.value)}
       />
+      <input type="hidden" name="introduction" value={artistDescription} />
     </section>
   );
 }

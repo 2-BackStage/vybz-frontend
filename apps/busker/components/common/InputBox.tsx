@@ -21,6 +21,7 @@ export default function InputBox({
       </label>
       <Input
         id={id}
+        name={id} // 명시적으로 name 속성 추가 (폼 제출 시 필요)
         placeholder={placeholder}
         className={`bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 h-10 ${className}`}
         {...props}

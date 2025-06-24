@@ -11,10 +11,28 @@ import SNSBox from '@/components/about/boxs/SNSBox';
 import CategoryBox from '@/components/about/boxs/CategoryBox';
 import NameBox from '@/components/about/boxs/NameBox';
 import Description from '@/components/about/boxs/Description';
-import InformationBox from '@/components/about/boxs/InformationBox';
 import { cn } from '@repo/ui/lib/utils';
+import {
+  BuskerSNSResponseType,
+  BuskerCategoryResponseType,
+} from '@/types/ResponseDataTypes';
+import {
+  updateProfile,
+  updateSNS,
+  updateCategories,
+} from '@/services/info-services/BuskerInfoReadService';
 
-export default function EditSection({ className }: { className?: string }) {
+export default function EditSection({
+  className,
+  SNSData,
+  buskerUuid,
+  buskerCategoryList,
+}: {
+  className?: string;
+  SNSData: BuskerSNSResponseType[];
+  buskerUuid: string;
+  buskerCategoryList: BuskerCategoryResponseType[];
+}) {
   return (
     <Card className={cn('bg-div-background border-div-background', className)}>
       <CardHeader className="border-b border-gray-700">
@@ -23,17 +41,25 @@ export default function EditSection({ className }: { className?: string }) {
           프로필 정보 수정
         </CardTitle>
       </CardHeader>
-      <form action="">
+
+      <form
+        id="profileForm"
+        action={async (formData) => {
+          'use server';
+          await Promise.all([
+            updateProfile(buskerUuid, formData),
+            updateSNS(buskerUuid, formData),
+            updateCategories(buskerUuid, formData),
+          ]);
+        }}
+      >
         <CardContent className="space-y-6 pt-6">
-          <AvatarUploader userUuid={'1'} />
+          <AvatarUploader userUuid={buskerUuid} />
           <NameBox />
-          <CategoryBox />
+          <CategoryBox buskerCategoryList={buskerCategoryList} />
           <Description />
-          <InformationBox
-            initialEmail="rnt@naver.com"
-            initialPhone="010-1234-5678"
-          />
-          <SNSBox />
+          <SNSBox SNSData={SNSData} />
+
           <div className="pt-4 border-t border-gray-700">
             <Button
               type="submit"

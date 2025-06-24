@@ -1,10 +1,15 @@
+'use client';
+
 import Image from 'next/image';
+import { use } from 'react';
+import { FormContext } from '@/context/FormContext';
 
 export function BackgroundWrapper({ children }: { children: React.ReactNode }) {
+  const { buskerProfileUrl } = use(FormContext);
   return (
     <div className="relative h-96 bg-gradient-to-b from-blue-400 to-purple-500">
       <Image
-        src="/buskerUrl.jpg"
+        src={buskerProfileUrl}
         alt="Profile Background"
         className="w-full h-full object-cover"
         width={100}

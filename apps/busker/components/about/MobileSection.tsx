@@ -13,7 +13,14 @@ import { BackgroundWrapper } from './boxs/BackgroundWrapper';
 import { BuskerInfoSection } from './boxs/BuskerInfoSection';
 import { SNSLinkBox } from './boxs/SNSLinkBox';
 import { RecentBox } from './boxs/RecentBox';
-export default function MobileSection({ className }: { className?: string }) {
+import { BuskerInfoReadResponseType } from '@/types/ResponseDataTypes';
+export default function MobileSection({
+  className,
+  initialData,
+}: {
+  className?: string;
+  initialData: BuskerInfoReadResponseType;
+}) {
   return (
     <Card className={cn('bg-div-background border-div-background', className)}>
       <CardHeader className="border-b border-gray-700">
@@ -25,18 +32,11 @@ export default function MobileSection({ className }: { className?: string }) {
       <CardContent className="pt-6 flex justify-center">
         <div className="w-80 bg-gray-900 rounded-3xl p-4 shadow-2xl border-4 border-gray-600">
           <div className="bg-gray-800 rounded-2xl h-full overflow-hidden relative">
-            {/* 스크롤 가능한 컨테이너 */}
             <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-gray-700">
-              {/* 배경 이미지 섹션 */}
               <BackgroundWrapper>
-                {/* 프로필 정보 오버레이 */}
                 <div className="absolute bottom-6 left-6 right-6">
                   <BuskerProfileBox />
-
-                  {/* 통계 */}
-                  <StateBox />
-
-                  {/* 응원 메시지 버튼 */}
+                  <StateBox initialData={initialData} />
                   <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-full">
                     응원 메시지 보내기
                   </Button>
