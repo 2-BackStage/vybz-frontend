@@ -1,0 +1,157 @@
+name: Rollback Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        type: choice
+        options:
+        - staging
+        - production
+      version:
+        description: 'Version to rollback to (commit hash)'
+        required: true
+        type: string
+      force_deploy_all:
+        description: 'Force deploy all apps (ignore changes)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  rollback:
+    name: Rollback ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    
+    steps:
+      - name: Checkout specific version
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+          fetch-depth: 0  # 전체 히스토리 필요
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: '8.15.6'
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Get changed apps
+        id: changed-apps
+        if: ${{ github.event.inputs.force_deploy_all != 'true' }}
+        run: |
+          # 변경된 앱들 감지 (롤백 버전과 현재 버전 비교)
+          CHANGED_APPS=$(turbo run build --filter=...[HEAD] --dry-run=json | jq -r '.tasks[] | select(.task == "build") | .package' | sort -u | tr '\n' ',' | sed 's/,$//')
+          
+          if [ -z "$CHANGED_APPS" ]; then
+            echo "No apps changed"
+            echo "changed_apps=" >> $GITHUB_OUTPUT
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changed apps: $CHANGED_APPS"
+            echo "changed_apps=$CHANGED_APPS" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+        
+      - name: Set force deploy flag
+        id: force-deploy
+        run: |
+          if [ "${{ github.event.inputs.force_deploy_all }}" = "true" ]; then
+            echo "force_deploy=true" >> $GITHUB_OUTPUT
+            echo "Force deploying all apps"
+          else
+            echo "force_deploy=false" >> $GITHUB_OUTPUT
+          fi
+        
+      - name: Build changed applications
+        if: steps.changed-apps.outputs.has_changes == 'true' && steps.force-deploy.outputs.force_deploy == 'false'
+        run: |
+          if [ -n "${{ steps.changed-apps.outputs.changed_apps }}" ]; then
+            echo "Building: ${{ steps.changed-apps.outputs.changed_apps }}"
+            turbo run build --filter="${{ steps.changed-apps.outputs.changed_apps }}"
+          else
+            echo "No apps to build"
+          fi
+        env:
+          NODE_ENV: ${{ github.event.inputs.environment }}
+          BASE_URL: ${{ secrets[format('{0}_BASE_URL', github.event.inputs.environment)] }}
+          BASE_API_URL: ${{ secrets[format('{0}_API_URL', github.event.inputs.environment)] }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: ${{ secrets[format('{0}_NEXTAUTH_URL', github.event.inputs.environment)] }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          
+      - name: Build all applications
+        if: steps.changed-apps.outputs.has_changes == 'false' || steps.force-deploy.outputs.force_deploy == 'true'
+        run: pnpm build
+        env:
+          NODE_ENV: ${{ github.event.inputs.environment }}
+          BASE_URL: ${{ secrets[format('{0}_BASE_URL', github.event.inputs.environment)] }}
+          BASE_API_URL: ${{ secrets[format('{0}_API_URL', github.event.inputs.environment)] }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: ${{ secrets[format('{0}_NEXTAUTH_URL', github.event.inputs.environment)] }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          
+      - name: Rollback User App (if changed or forced)
+        if: contains(steps.changed-apps.outputs.changed_apps, 'user') || steps.changed-apps.outputs.has_changes == 'false' || steps.force-deploy.outputs.force_deploy == 'true'
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_USER_PROJECT_ID }}
+          working-directory: ./apps/user
+          vercel-args: '--prod'
+          
+      - name: Rollback Busker App (if changed or forced)
+        if: contains(steps.changed-apps.outputs.changed_apps, 'busker') || steps.changed-apps.outputs.has_changes == 'false' || steps.force-deploy.outputs.force_deploy == 'true'
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_BUSKER_PROJECT_ID }}
+          working-directory: ./apps/busker
+          vercel-args: '--prod'
+          
+      - name: Rollback Admin App (if changed or forced)
+        if: contains(steps.changed-apps.outputs.changed_apps, 'admin') || steps.changed-apps.outputs.has_changes == 'false' || steps.force-deploy.outputs.force_deploy == 'true'
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_ADMIN_PROJECT_ID }}
+          working-directory: ./apps/admin
+          vercel-args: '--prod'
+          
+      - name: Notify rollback success
+        if: success()
+        run: |
+          echo "✅ Rollback to ${{ github.event.inputs.version }} completed successfully!"
+          echo "Environment: ${{ github.event.inputs.environment }}"
+          if [ "${{ steps.force-deploy.outputs.force_deploy }}" = "true" ]; then
+            echo "Force deployed all apps"
+          elif [ "${{ steps.changed-apps.outputs.has_changes }}" = "true" ]; then
+            echo "Deployed apps: ${{ steps.changed-apps.outputs.changed_apps }}"
+          else
+            echo "Deployed all apps (no changes detected)"
+          fi
+          
+      - name: Notify rollback failure
+        if: failure()
+        run: |
+          echo "❌ Rollback failed!"
+          exit 1 

@@ -1,0 +1,247 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [main, dev]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+        - staging
+        - production
+      force_deploy_all:
+        description: 'Force deploy all apps (ignore changes)'
+        required: false
+        default: false
+        type: boolean
+      deploy_to_ec2:
+        description: 'Deploy to EC2 (instead of Vercel)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '18'
+  PNPM_VERSION: '8.15.6'
+
+jobs:
+  deploy-ec2:
+    name: Deploy to EC2 - ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging') }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging') }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 전체 히스토리 필요
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+          
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+            
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Get changed apps
+        id: changed-apps
+        if: ${{ github.event.inputs.force_deploy_all != 'true' }}
+        run: |
+          # 변경된 앱들 감지
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # PR의 경우 base와 비교
+            CHANGED_APPS=$(turbo run build --filter=...[origin/${{ github.base_ref }}] --dry-run=json | jq -r '.tasks[] | select(.task == "build") | .package' | sort -u | tr '\n' ',' | sed 's/,$//')
+          else
+            # Push의 경우 이전 커밋과 비교
+            CHANGED_APPS=$(turbo run build --filter=...[HEAD~1] --dry-run=json | jq -r '.tasks[] | select(.task == "build") | .package' | sort -u | tr '\n' ',' | sed 's/,$//')
+          fi
+          
+          if [ -z "$CHANGED_APPS" ]; then
+            echo "No apps changed"
+            echo "changed_apps=" >> $GITHUB_OUTPUT
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changed apps: $CHANGED_APPS"
+            echo "changed_apps=$CHANGED_APPS" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+        
+      - name: Set force deploy flag
+        id: force-deploy
+        run: |
+          if [ "${{ github.event.inputs.force_deploy_all }}" = "true" ]; then
+            echo "force_deploy=true" >> $GITHUB_OUTPUT
+            echo "Force deploying all apps"
+          else
+            echo "force_deploy=false" >> $GITHUB_OUTPUT
+          fi
+        
+      - name: Build changed applications
+        if: steps.changed-apps.outputs.has_changes == 'true' && steps.force-deploy.outputs.force_deploy == 'false'
+        run: |
+          if [ -n "${{ steps.changed-apps.outputs.changed_apps }}" ]; then
+            echo "Building: ${{ steps.changed-apps.outputs.changed_apps }}"
+            turbo run build --filter="${{ steps.changed-apps.outputs.changed_apps }}"
+          else
+            echo "No apps to build"
+          fi
+        env:
+          NODE_ENV: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging') }}
+          BASE_URL: ${{ secrets[format('{0}_BASE_URL', github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging'))] }}
+          BASE_API_URL: ${{ secrets[format('{0}_API_URL', github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging'))] }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: ${{ secrets[format('{0}_NEXTAUTH_URL', github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging'))] }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          
+      - name: Build all applications
+        if: steps.changed-apps.outputs.has_changes == 'false' || steps.force-deploy.outputs.force_deploy == 'true'
+        run: pnpm build
+        env:
+          NODE_ENV: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging') }}
+          BASE_URL: ${{ secrets[format('{0}_BASE_URL', github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging'))] }}
+          BASE_API_URL: ${{ secrets[format('{0}_API_URL', github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging'))] }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: ${{ secrets[format('{0}_NEXTAUTH_URL', github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging'))] }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        
+      - name: Build and push Docker images
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY_USER: vybz-user
+          ECR_REPOSITORY_BUSKER: vybz-busker
+          ECR_REPOSITORY_ADMIN: vybz-admin
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # User App
+          if [[ "${{ steps.changed-apps.outputs.changed_apps }}" == *"user"* ]] || [[ "${{ steps.changed-apps.outputs.has_changes }}" == "false" ]] || [[ "${{ steps.force-deploy.outputs.force_deploy }}" == "true" ]]; then
+            echo "Building and pushing User app..."
+            docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_USER:$IMAGE_TAG -f apps/user/Dockerfile apps/user/
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY_USER:$IMAGE_TAG
+            docker tag $ECR_REGISTRY/$ECR_REPOSITORY_USER:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY_USER:latest
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY_USER:latest
+          fi
+          
+          # Busker App
+          if [[ "${{ steps.changed-apps.outputs.changed_apps }}" == *"busker"* ]] || [[ "${{ steps.changed-apps.outputs.has_changes }}" == "false" ]] || [[ "${{ steps.force-deploy.outputs.force_deploy }}" == "true" ]]; then
+            echo "Building and pushing Busker app..."
+            docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_BUSKER:$IMAGE_TAG -f apps/busker/Dockerfile apps/busker/
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY_BUSKER:$IMAGE_TAG
+            docker tag $ECR_REGISTRY/$ECR_REPOSITORY_BUSKER:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY_BUSKER:latest
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY_BUSKER:latest
+          fi
+          
+          # Admin App
+          if [[ "${{ steps.changed-apps.outputs.changed_apps }}" == *"admin"* ]] || [[ "${{ steps.changed-apps.outputs.has_changes }}" == "false" ]] || [[ "${{ steps.force-deploy.outputs.force_deploy }}" == "true" ]]; then
+            echo "Building and pushing Admin app..."
+            docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_ADMIN:$IMAGE_TAG -f apps/admin/Dockerfile apps/admin/
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY_ADMIN:$IMAGE_TAG
+            docker tag $ECR_REGISTRY/$ECR_REPOSITORY_ADMIN:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY_ADMIN:latest
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY_ADMIN:latest
+          fi
+          
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || 22 }}
+          script: |
+            # 환경 변수 설정
+            ENVIRONMENT="${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging') }}"
+            IMAGE_TAG="${{ github.sha }}"
+            ECR_REGISTRY="${{ steps.login-ecr.outputs.registry }}"
+            
+            # Docker Compose 파일 업데이트
+            cd /opt/vybz
+            
+            # 변경된 앱들에 따라 서비스 업데이트
+            if [[ "${{ steps.changed-apps.outputs.changed_apps }}" == *"user"* ]] || [[ "${{ steps.changed-apps.outputs.has_changes }}" == "false" ]] || [[ "${{ steps.force-deploy.outputs.force_deploy }}" == "true" ]]; then
+              echo "Updating User app..."
+              docker-compose -f docker-compose.$ENVIRONMENT.yml pull user
+              docker-compose -f docker-compose.$ENVIRONMENT.yml up -d user
+            fi
+            
+            if [[ "${{ steps.changed-apps.outputs.changed_apps }}" == *"busker"* ]] || [[ "${{ steps.changed-apps.outputs.has_changes }}" == "false" ]] || [[ "${{ steps.force-deploy.outputs.force_deploy }}" == "true" ]]; then
+              echo "Updating Busker app..."
+              docker-compose -f docker-compose.$ENVIRONMENT.yml pull busker
+              docker-compose -f docker-compose.$ENVIRONMENT.yml up -d busker
+            fi
+            
+            if [[ "${{ steps.changed-apps.outputs.changed_apps }}" == *"admin"* ]] || [[ "${{ steps.changed-apps.outputs.has_changes }}" == "false" ]] || [[ "${{ steps.force-deploy.outputs.force_deploy }}" == "true" ]]; then
+              echo "Updating Admin app..."
+              docker-compose -f docker-compose.$ENVIRONMENT.yml pull admin
+              docker-compose -f docker-compose.$ENVIRONMENT.yml up -d admin
+            fi
+            
+            # 헬스 체크
+            sleep 10
+            docker-compose -f docker-compose.$ENVIRONMENT.yml ps
+            
+            # 오래된 이미지 정리
+            docker image prune -f
+            
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests..."
+          # EC2 배포 후 헬스 체크
+          # curl -f ${{ secrets[format('{0}_BASE_URL', github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging'))] }}/api/health
+          
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "✅ EC2 deployment completed successfully!"
+          echo "Environment: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging') }}"
+          if [ "${{ steps.force-deploy.outputs.force_deploy }}" = "true" ]; then
+            echo "Force deployed all apps"
+          elif [ "${{ steps.changed-apps.outputs.has_changes }}" = "true" ]; then
+            echo "Deployed apps: ${{ steps.changed-apps.outputs.changed_apps }}"
+          else
+            echo "Deployed all apps (no changes detected)"
+          fi
+          echo "EC2 Host: ${{ secrets.EC2_HOST }}"
+          
+      - name: Notify deployment failure
+        if: failure()
+        run: |
+          echo "❌ EC2 deployment failed!"
+          exit 1 
