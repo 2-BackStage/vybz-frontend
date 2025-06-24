@@ -10,45 +10,45 @@ jobs:
   update-dependencies:
     name: Update Dependencies
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: '8.15.6'
-          
+          version: '10.12.2'
+
       - name: Install dependencies
         run: pnpm install
-        
+
       - name: Check for outdated dependencies
         id: check
         run: |
           echo "Checking for outdated dependencies..."
           pnpm outdated --format=json > outdated.json || echo "[]" > outdated.json
-          
+
       - name: Update dependencies
         if: steps.check.outputs.has-updates == 'true'
         run: |
           echo "Updating dependencies..."
           pnpm update --latest
-          
+
       - name: Run tests after update
         if: steps.check.outputs.has-updates == 'true'
         run: |
           pnpm lint
           pnpm check-types
           pnpm build
-          
+
       - name: Create Pull Request
         if: steps.check.outputs.has-updates == 'true'
         uses: peter-evans/create-pull-request@v5
@@ -58,20 +58,20 @@ jobs:
           title: 'chore: update dependencies'
           body: |
             ## Dependency Updates
-            
+
             This PR updates outdated dependencies to their latest versions.
-            
+
             ### Changes
             - Updated dependencies to latest versions
             - All tests passing
             - Build successful
-            
+
             ### Checklist
             - [x] Dependencies updated
             - [x] Linting passed
             - [x] Type checking passed
             - [x] Build successful
-            
+
             Please review and merge if everything looks good.
           branch: chore/update-dependencies
-          delete-branch: true 
+          delete-branch: true

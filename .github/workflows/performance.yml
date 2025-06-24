@@ -13,26 +13,26 @@ jobs:
   lighthouse:
     name: Lighthouse Performance Test
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 전체 히스토리 필요
-          
+          fetch-depth: 0 # 전체 히스토리 필요
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: '8.15.6'
-          
+          version: '10.12.2'
+
       - name: Install dependencies
         run: pnpm install
-        
+
       - name: Get changed apps
         id: changed-apps
         if: github.event_name != 'schedule'
@@ -45,7 +45,7 @@ jobs:
             # Push의 경우 이전 커밋과 비교
             CHANGED_APPS=$(turbo run build --filter=...[HEAD~1] --dry-run=json | jq -r '.tasks[] | select(.task == "build") | .package' | sort -u | tr '\n' ',' | sed 's/,$//')
           fi
-          
+
           if [ -z "$CHANGED_APPS" ]; then
             echo "No apps changed"
             echo "changed_apps=" >> $GITHUB_OUTPUT
@@ -55,12 +55,12 @@ jobs:
             echo "changed_apps=$CHANGED_APPS" >> $GITHUB_OUTPUT
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
-        
+
       - name: Build applications
         run: pnpm build
         env:
           NODE_ENV: production
-          
+
       - name: Run Lighthouse CI (changed apps only)
         if: github.event_name != 'schedule' && steps.changed-apps.outputs.has_changes == 'true'
         uses: treosh/lighthouse-ci-action@v10
@@ -72,7 +72,7 @@ jobs:
           uploadArtifacts: true
           temporaryPublicStorage: true
           configPath: './.lighthouserc.json'
-          
+
       - name: Run Lighthouse CI (all apps - scheduled)
         if: github.event_name == 'schedule'
         uses: treosh/lighthouse-ci-action@v10
@@ -84,7 +84,7 @@ jobs:
           uploadArtifacts: true
           temporaryPublicStorage: true
           configPath: './.lighthouserc.json'
-          
+
       - name: Run Lighthouse CI (all apps - no changes detected)
         if: github.event_name != 'schedule' && steps.changed-apps.outputs.has_changes == 'false'
         uses: treosh/lighthouse-ci-action@v10
@@ -96,7 +96,7 @@ jobs:
           uploadArtifacts: true
           temporaryPublicStorage: true
           configPath: './.lighthouserc.json'
-          
+
       - name: Comment PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -104,13 +104,13 @@ jobs:
           script: |
             const fs = require('fs');
             const results = JSON.parse(fs.readFileSync('.lighthouseci/lighthouse-results.json', 'utf8'));
-            
+
             let comment = '## 🚀 Lighthouse Performance Results\n\n';
-            
+
             if ('${{ steps.changed-apps.outputs.has_changes }}' === 'true') {
               comment += '**Changed apps tested:** ${{ steps.changed-apps.outputs.changed_apps }}\n\n';
             }
-            
+
             results.forEach(result => {
               const scores = result.summary;
               comment += `### ${result.url}\n`;
@@ -119,7 +119,7 @@ jobs:
               comment += `- Best Practices: ${Math.round(scores['best-practices'] * 100)}%\n`;
               comment += `- SEO: ${Math.round(scores.seo * 100)}%\n\n`;
             });
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -131,32 +131,32 @@ jobs:
     name: Bundle Analysis
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: '8.15.6'
-          
+
       - name: Install dependencies
         run: pnpm install
-        
+
       - name: Get changed apps
         id: changed-apps
         run: |
           # 변경된 앱들 감지
           CHANGED_APPS=$(turbo run build --filter=...[origin/${{ github.base_ref }}] --dry-run=json | jq -r '.tasks[] | select(.task == "build") | .package' | sort -u | tr '\n' ',' | sed 's/,$//')
-          
+
           if [ -z "$CHANGED_APPS" ]; then
             echo "No apps changed"
             echo "changed_apps=" >> $GITHUB_OUTPUT
@@ -166,7 +166,7 @@ jobs:
             echo "changed_apps=$CHANGED_APPS" >> $GITHUB_OUTPUT
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
-        
+
       - name: Build with bundle analyzer (changed apps only)
         if: steps.changed-apps.outputs.has_changes == 'true'
         run: |
@@ -178,7 +178,7 @@ jobs:
           fi
         env:
           NODE_ENV: production
-          
+
       - name: Build with bundle analyzer (all apps)
         if: steps.changed-apps.outputs.has_changes == 'false'
         run: |
@@ -186,11 +186,11 @@ jobs:
           ANALYZE=true pnpm build
         env:
           NODE_ENV: production
-          
+
       - name: Upload bundle analysis
         uses: actions/upload-artifact@v4
         with:
           name: bundle-analysis
           path: |
             apps/*/.next/analyze/
-            apps/*/bundle-analyzer-report.html 
+            apps/*/bundle-analyzer-report.html
