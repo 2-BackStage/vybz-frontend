@@ -12,28 +12,28 @@ jobs:
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 전체 히스토리 필요
-          
+          fetch-depth: 0 # 전체 히스토리 필요
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
-          
+
       - name: Get pnpm store directory
         shell: bash
         run: |
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-          
+
       - name: Setup pnpm cache
         uses: actions/cache@v4
         with:
@@ -41,16 +41,16 @@ jobs:
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
-            
+
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-        
+        run: pnpm install --no-frozen-lockfile
+
       - name: Get changed apps
         id: changed-apps
         run: |
           # 변경된 앱들 감지
           CHANGED_APPS=$(turbo run build --filter=...[HEAD~1] --dry-run=json | jq -r '.tasks[] | select(.task == "build") | .package' | sort -u | tr '\n' ',' | sed 's/,$//')
-          
+
           if [ -z "$CHANGED_APPS" ]; then
             echo "No apps changed"
             echo "changed_apps=" >> $GITHUB_OUTPUT
@@ -60,7 +60,7 @@ jobs:
             echo "changed_apps=$CHANGED_APPS" >> $GITHUB_OUTPUT
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
-        
+
       - name: Build changed applications
         if: steps.changed-apps.outputs.has_changes == 'true'
         run: |
@@ -80,7 +80,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
-          
+
       - name: Build all applications (if no changes detected)
         if: steps.changed-apps.outputs.has_changes == 'false'
         run: pnpm build
@@ -94,7 +94,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
-          
+
       - name: Deploy User App (if changed)
         if: contains(steps.changed-apps.outputs.changed_apps, 'user') || steps.changed-apps.outputs.has_changes == 'false'
         uses: amondnet/vercel-action@v25
@@ -104,7 +104,7 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_USER_PROJECT_ID }}
           working-directory: ./apps/user
           vercel-args: '--prod'
-          
+
       - name: Deploy Busker App (if changed)
         if: contains(steps.changed-apps.outputs.changed_apps, 'busker') || steps.changed-apps.outputs.has_changes == 'false'
         uses: amondnet/vercel-action@v25
@@ -114,7 +114,7 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_BUSKER_PROJECT_ID }}
           working-directory: ./apps/busker
           vercel-args: '--prod'
-          
+
       - name: Deploy Admin App (if changed)
         if: contains(steps.changed-apps.outputs.changed_apps, 'admin') || steps.changed-apps.outputs.has_changes == 'false'
         uses: amondnet/vercel-action@v25
@@ -124,7 +124,7 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_ADMIN_PROJECT_ID }}
           working-directory: ./apps/admin
           vercel-args: '--prod'
-          
+
       - name: Notify deployment success
         if: success()
         run: |
@@ -137,9 +137,9 @@ jobs:
           echo "User App: ${{ secrets.STAGING_USER_URL }}"
           echo "Busker App: ${{ secrets.STAGING_BUSKER_URL }}"
           echo "Admin App: ${{ secrets.STAGING_ADMIN_URL }}"
-          
+
       - name: Notify deployment failure
         if: failure()
         run: |
           echo "❌ Staging deployment failed!"
-          exit 1 
+          exit 1

@@ -6,9 +6,6 @@
   --color-div-background: oklch(0.25 0.01 250);
 }
 
-@source "../../../packages/ui/src/components/ui";
-@source "../../../packages/ui/src/components/**/*.{ts,tsx}";
-
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -143,10 +140,9 @@
   }
 }
 
-
 @supports (view-transition-name: test) {
   [data-support] [data-support-yes] {
-      display: inline;
+    display: inline;
   }
   [data-support] [data-support-no] {
     display: none;
@@ -155,7 +151,7 @@
 
 @supports not (view-transition-name: test) {
   [data-support] [data-support-yes] {
-      display: none;
+    display: none;
   }
   [data-support] [data-support-no] {
     display: inline;
