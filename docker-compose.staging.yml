@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   user:
-    image: ${ECR_REGISTRY}/vybz-user:latest
+    image: ${DOCKER_REGISTRY}/vybz-user:latest
     container_name: vybz-user-staging
     ports:
       - "3000:3000"
@@ -25,7 +25,7 @@ services:
       start_period: 40s
 
   busker:
-    image: ${ECR_REGISTRY}/vybz-busker:latest
+    image: ${DOCKER_REGISTRY}/vybz-busker:latest
     container_name: vybz-busker-staging
     ports:
       - "3001:3001"
@@ -48,7 +48,7 @@ services:
       start_period: 40s
 
   admin:
-    image: ${ECR_REGISTRY}/vybz-admin:latest
+    image: ${DOCKER_REGISTRY}/vybz-admin:latest
     container_name: vybz-admin-staging
     ports:
       - "3002:3002"

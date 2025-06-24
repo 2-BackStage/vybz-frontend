@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   user:
-    image: ${ECR_REGISTRY}/vybz-user:latest
+    image: ${DOCKER_REGISTRY}/vybz-user:latest
     container_name: vybz-user-production
     ports:
       - "3000:3000"
@@ -33,7 +33,7 @@ services:
           cpus: '0.25'
 
   busker:
-    image: ${ECR_REGISTRY}/vybz-busker:latest
+    image: ${DOCKER_REGISTRY}/vybz-busker:latest
     container_name: vybz-busker-production
     ports:
       - "3001:3001"
@@ -64,7 +64,7 @@ services:
           cpus: '0.25'
 
   admin:
-    image: ${ECR_REGISTRY}/vybz-admin:latest
+    image: ${DOCKER_REGISTRY}/vybz-admin:latest
     container_name: vybz-admin-production
     ports:
       - "3002:3002"

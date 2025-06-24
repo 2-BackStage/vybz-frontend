@@ -35,7 +35,7 @@ Vybz는 버스킹 플랫폼의 프론트엔드 모노레포입니다. Turborepo�
 
 4. **EC2 Deployment** (`.github/workflows/cd-ec2.yml`)
    - EC2에 Docker 컨테이너로 배포
-   - ECR을 통한 이미지 관리
+   - Docker Hub를 통한 이미지 관리
    - 변경된 앱만 선택적 배포
 
 5. **Performance Monitoring** (`.github/workflows/performance.yml`)
@@ -124,6 +124,10 @@ CI/CD 파이프라인을 위해 다음 GitHub Secrets를 설정해야 합니다:
 - `VERCEL_USER_PROJECT_ID`
 - `VERCEL_BUSKER_PROJECT_ID`
 - `VERCEL_ADMIN_PROJECT_ID`
+
+### Docker Hub 관련
+- `DOCKERHUB_USERNAME`: Docker Hub 사용자명
+- `DOCKERHUB_TOKEN`: Docker Hub 액세스 토큰
 
 ### EC2 관련
 - `EC2_HOST`
