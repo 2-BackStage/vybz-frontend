@@ -1,0 +1,180 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - production-rollback
+      force_deploy_all:
+        description: 'Force deploy all apps (ignore changes)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '18'
+  PNPM_VERSION: '8.15.6'
+
+jobs:
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 전체 히스토리 필요
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+          
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+            
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Get changed apps
+        id: changed-apps
+        if: ${{ github.event.inputs.force_deploy_all != 'true' }}
+        run: |
+          # 변경된 앱들 감지
+          CHANGED_APPS=$(turbo run build --filter=...[HEAD~1] --dry-run=json | jq -r '.tasks[] | select(.task == "build") | .package' | sort -u | tr '\n' ',' | sed 's/,$//')
+          
+          if [ -z "$CHANGED_APPS" ]; then
+            echo "No apps changed"
+            echo "changed_apps=" >> $GITHUB_OUTPUT
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changed apps: $CHANGED_APPS"
+            echo "changed_apps=$CHANGED_APPS" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+        
+      - name: Set force deploy flag
+        id: force-deploy
+        run: |
+          if [ "${{ github.event.inputs.force_deploy_all }}" = "true" ]; then
+            echo "force_deploy=true" >> $GITHUB_OUTPUT
+            echo "Force deploying all apps"
+          else
+            echo "force_deploy=false" >> $GITHUB_OUTPUT
+          fi
+        
+      - name: Build changed applications
+        if: steps.changed-apps.outputs.has_changes == 'true' && steps.force-deploy.outputs.force_deploy == 'false'
+        run: |
+          if [ -n "${{ steps.changed-apps.outputs.changed_apps }}" ]; then
+            echo "Building: ${{ steps.changed-apps.outputs.changed_apps }}"
+            turbo run build --filter="${{ steps.changed-apps.outputs.changed_apps }}"
+          else
+            echo "No apps to build"
+          fi
+        env:
+          NODE_ENV: production
+          BASE_URL: ${{ secrets.PRODUCTION_BASE_URL }}
+          BASE_API_URL: ${{ secrets.PRODUCTION_API_URL }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: ${{ secrets.PRODUCTION_NEXTAUTH_URL }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          
+      - name: Build all applications
+        if: steps.changed-apps.outputs.has_changes == 'false' || steps.force-deploy.outputs.force_deploy == 'true'
+        run: pnpm build
+        env:
+          NODE_ENV: production
+          BASE_URL: ${{ secrets.PRODUCTION_BASE_URL }}
+          BASE_API_URL: ${{ secrets.PRODUCTION_API_URL }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: ${{ secrets.PRODUCTION_NEXTAUTH_URL }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          
+      - name: Deploy User App (if changed or forced)
+        if: contains(steps.changed-apps.outputs.changed_apps, 'user') || steps.changed-apps.outputs.has_changes == 'false' || steps.force-deploy.outputs.force_deploy == 'true'
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_USER_PROJECT_ID }}
+          working-directory: ./apps/user
+          vercel-args: '--prod'
+          
+      - name: Deploy Busker App (if changed or forced)
+        if: contains(steps.changed-apps.outputs.changed_apps, 'busker') || steps.changed-apps.outputs.has_changes == 'false' || steps.force-deploy.outputs.force_deploy == 'true'
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_BUSKER_PROJECT_ID }}
+          working-directory: ./apps/busker
+          vercel-args: '--prod'
+          
+      - name: Deploy Admin App (if changed or forced)
+        if: contains(steps.changed-apps.outputs.changed_apps, 'admin') || steps.changed-apps.outputs.has_changes == 'false' || steps.force-deploy.outputs.force_deploy == 'true'
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_ADMIN_PROJECT_ID }}
+          working-directory: ./apps/admin
+          vercel-args: '--prod'
+          
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests..."
+          # Add your smoke test commands here
+          # Example: curl -f ${{ secrets.PRODUCTION_USER_URL }}/api/health
+          
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "✅ Production deployment completed successfully!"
+          if [ "${{ steps.force-deploy.outputs.force_deploy }}" = "true" ]; then
+            echo "Force deployed all apps"
+          elif [ "${{ steps.changed-apps.outputs.has_changes }}" = "true" ]; then
+            echo "Deployed apps: ${{ steps.changed-apps.outputs.changed_apps }}"
+          else
+            echo "Deployed all apps (no changes detected)"
+          fi
+          echo "User App: ${{ secrets.PRODUCTION_USER_URL }}"
+          echo "Busker App: ${{ secrets.PRODUCTION_BUSKER_URL }}"
+          echo "Admin App: ${{ secrets.PRODUCTION_ADMIN_URL }}"
+          
+      - name: Notify deployment failure
+        if: failure()
+        run: |
+          echo "❌ Production deployment failed!"
+          exit 1 

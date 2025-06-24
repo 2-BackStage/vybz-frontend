@@ -1,0 +1,207 @@
+name: Rollback Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        type: choice
+        options:
+        - staging
+        - production
+      version:
+        description: 'Version to rollback to (commit hash)'
+        required: true
+        type: string
+      force_deploy_all:
+        description: 'Force deploy all apps (ignore changes)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  rollback:
+    name: Rollback ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    
+    steps:
+      - name: Checkout specific version
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+          fetch-depth: 0  # 전체 히스토리 필요
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: '8.15.6'
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Get changed apps
+        id: changed-apps
+        if: ${{ github.event.inputs.force_deploy_all != 'true' }}
+        run: |
+          # 변경된 앱들 감지 (롤백 버전과 현재 버전 비교)
+          CHANGED_APPS=$(turbo run build --filter=...[HEAD] --dry-run=json | jq -r '.tasks[] | select(.task == "build") | .package' | sort -u | tr '\n' ',' | sed 's/,$//')
+          
+          if [ -z "$CHANGED_APPS" ]; then
+            echo "No apps changed"
+            echo "changed_apps=" >> $GITHUB_OUTPUT
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changed apps: $CHANGED_APPS"
+            echo "changed_apps=$CHANGED_APPS" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+        
+      - name: Set force deploy flag
+        id: force-deploy
+        run: |
+          if [ "${{ github.event.inputs.force_deploy_all }}" = "true" ]; then
+            echo "force_deploy=true" >> $GITHUB_OUTPUT
+            echo "Force deploying all apps"
+          else
+            echo "force_deploy=false" >> $GITHUB_OUTPUT
+          fi
+        
+      - name: Build changed applications
+        if: steps.changed-apps.outputs.has_changes == 'true' && steps.force-deploy.outputs.force_deploy == 'false'
+        run: |
+          if [ -n "${{ steps.changed-apps.outputs.changed_apps }}" ]; then
+            echo "Building: ${{ steps.changed-apps.outputs.changed_apps }}"
+            turbo run build --filter="${{ steps.changed-apps.outputs.changed_apps }}"
+          else
+            echo "No apps to build"
+          fi
+        env:
+          NODE_ENV: ${{ github.event.inputs.environment }}
+          BASE_URL: ${{ secrets[format('{0}_BASE_URL', github.event.inputs.environment)] }}
+          BASE_API_URL: ${{ secrets[format('{0}_API_URL', github.event.inputs.environment)] }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: ${{ secrets[format('{0}_NEXTAUTH_URL', github.event.inputs.environment)] }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          
+      - name: Build all applications
+        if: steps.changed-apps.outputs.has_changes == 'false' || steps.force-deploy.outputs.force_deploy == 'true'
+        run: pnpm build
+        env:
+          NODE_ENV: ${{ github.event.inputs.environment }}
+          BASE_URL: ${{ secrets[format('{0}_BASE_URL', github.event.inputs.environment)] }}
+          BASE_API_URL: ${{ secrets[format('{0}_API_URL', github.event.inputs.environment)] }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: ${{ secrets[format('{0}_NEXTAUTH_URL', github.event.inputs.environment)] }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+          
+      - name: Build and push Docker images
+        env:
+          DOCKER_REGISTRY: ${{ secrets.DOCKER_HUB_USERNAME }}
+          IMAGE_TAG: ${{ github.event.inputs.version }}
+        run: |
+          # User App
+          if [[ "${{ steps.changed-apps.outputs.changed_apps }}" == *"user"* ]] || [[ "${{ steps.changed-apps.outputs.has_changes }}" == "false" ]] || [[ "${{ steps.force-deploy.outputs.force_deploy }}" == "true" ]]; then
+            echo "Building and pushing User app..."
+            docker build -t $DOCKER_REGISTRY/vybz-user:$IMAGE_TAG -f apps/user/Dockerfile .
+            docker push $DOCKER_REGISTRY/vybz-user:$IMAGE_TAG
+            docker tag $DOCKER_REGISTRY/vybz-user:$IMAGE_TAG $DOCKER_REGISTRY/vybz-user:latest
+            docker push $DOCKER_REGISTRY/vybz-user:latest
+          fi
+          
+          # Busker App
+          if [[ "${{ steps.changed-apps.outputs.changed_apps }}" == *"busker"* ]] || [[ "${{ steps.changed-apps.outputs.has_changes }}" == "false" ]] || [[ "${{ steps.force-deploy.outputs.force_deploy }}" == "true" ]]; then
+            echo "Building and pushing Busker app..."
+            docker build -t $DOCKER_REGISTRY/vybz-busker:$IMAGE_TAG -f apps/busker/Dockerfile .
+            docker push $DOCKER_REGISTRY/vybz-busker:$IMAGE_TAG
+            docker tag $DOCKER_REGISTRY/vybz-busker:$IMAGE_TAG $DOCKER_REGISTRY/vybz-busker:latest
+            docker push $DOCKER_REGISTRY/vybz-busker:latest
+          fi
+          
+          # Admin App
+          if [[ "${{ steps.changed-apps.outputs.changed_apps }}" == *"admin"* ]] || [[ "${{ steps.changed-apps.outputs.has_changes }}" == "false" ]] || [[ "${{ steps.force-deploy.outputs.force_deploy }}" == "true" ]]; then
+            echo "Building and pushing Admin app..."
+            docker build -t $DOCKER_REGISTRY/vybz-admin:$IMAGE_TAG -f apps/admin/Dockerfile .
+            docker push $DOCKER_REGISTRY/vybz-admin:$IMAGE_TAG
+            docker tag $DOCKER_REGISTRY/vybz-admin:$IMAGE_TAG $DOCKER_REGISTRY/vybz-admin:latest
+            docker push $DOCKER_REGISTRY/vybz-admin:latest
+          fi
+          
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || 22 }}
+          script: |
+            # 환경 변수 설정
+            ENVIRONMENT="${{ github.event.inputs.environment }}"
+            IMAGE_TAG="${{ github.event.inputs.version }}"
+            DOCKER_REGISTRY="${{ secrets.DOCKER_HUB_USERNAME }}"
+            
+            # Docker Compose 파일 업데이트
+            cd /opt/vybz
+            
+            # 변경된 앱들에 따라 서비스 업데이트
+            if [[ "${{ steps.changed-apps.outputs.changed_apps }}" == *"user"* ]] || [[ "${{ steps.changed-apps.outputs.has_changes }}" == "false" ]] || [[ "${{ steps.force-deploy.outputs.force_deploy }}" == "true" ]]; then
+              echo "Updating User app..."
+              docker-compose -f docker-compose.$ENVIRONMENT.yml pull user
+              docker-compose -f docker-compose.$ENVIRONMENT.yml up -d user
+            fi
+            
+            if [[ "${{ steps.changed-apps.outputs.changed_apps }}" == *"busker"* ]] || [[ "${{ steps.changed-apps.outputs.has_changes }}" == "false" ]] || [[ "${{ steps.force-deploy.outputs.force_deploy }}" == "true" ]]; then
+              echo "Updating Busker app..."
+              docker-compose -f docker-compose.$ENVIRONMENT.yml pull busker
+              docker-compose -f docker-compose.$ENVIRONMENT.yml up -d busker
+            fi
+            
+            if [[ "${{ steps.changed-apps.outputs.changed_apps }}" == *"admin"* ]] || [[ "${{ steps.changed-apps.outputs.has_changes }}" == "false" ]] || [[ "${{ steps.force-deploy.outputs.force_deploy }}" == "true" ]]; then
+              echo "Updating Admin app..."
+              docker-compose -f docker-compose.$ENVIRONMENT.yml pull admin
+              docker-compose -f docker-compose.$ENVIRONMENT.yml up -d admin
+            fi
+            
+            # 헬스 체크
+            sleep 10
+            docker-compose -f docker-compose.$ENVIRONMENT.yml ps
+            
+            # 오래된 이미지 정리
+            docker image prune -f
+            
+      - name: Notify rollback success
+        if: success()
+        run: |
+          echo "✅ Rollback to ${{ github.event.inputs.version }} completed successfully!"
+          echo "Environment: ${{ github.event.inputs.environment }}"
+          if [ "${{ steps.force-deploy.outputs.force_deploy }}" = "true" ]; then
+            echo "Force deployed all apps"
+          elif [ "${{ steps.changed-apps.outputs.has_changes }}" = "true" ]; then
+            echo "Deployed apps: ${{ steps.changed-apps.outputs.changed_apps }}"
+          else
+            echo "Deployed all apps (no changes detected)"
+          fi
+          
+      - name: Notify rollback failure
+        if: failure()
+        run: |
+          echo "❌ Rollback failed!"
+          exit 1 
