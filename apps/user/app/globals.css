@@ -2,6 +2,10 @@
 @import '@repo/tailwind-config';
 @import '@repo/ui/styles.css';
 
+@theme {
+  --color-div-background: oklch(0.25 0.01 250);
+}
+
 @source "../../../packages/ui/src/components/ui";
 @source "../../../packages/ui/src/components/**/*.{ts,tsx}";
 
@@ -48,7 +52,7 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
+  --background: oklch(0.16 0.02 255);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -121,5 +125,49 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  .font-inter {
+    font-family: var(--font-inter), sans-serif;
+  }
+
+  .font-roboto {
+    font-family: var(--font-roboto), sans-serif;
+  }
+
+  .font-monoton {
+    font-family: var(--font-monoton), cursive;
+  }
+
+  .font-poppins {
+    font-family: var(--font-poppins), sans-serif;
+  }
+}
+
+
+@supports (view-transition-name: test) {
+  [data-support] [data-support-yes] {
+      display: inline;
+  }
+  [data-support] [data-support-no] {
+    display: none;
+  }
+}
+
+@supports not (view-transition-name: test) {
+  [data-support] [data-support-yes] {
+      display: none;
+  }
+  [data-support] [data-support-no] {
+    display: inline;
+  }
+}
+
+/* Safari */
+@supports (-webkit-hyphens: none) and (not (-moz-appearance: none)) {
+  [data-support] [data-support-yes] {
+    display: none;
+  }
+  [data-support] [data-support-no] {
+    display: inline;
   }
 }

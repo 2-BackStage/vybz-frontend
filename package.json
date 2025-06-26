@@ -4,16 +4,19 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "start": "turbo run start",
     "lint": "turbo run lint",
     "check-types": "turbo run check-types",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "graph": "turbo run build lint check-types --graph=graph.png",
-    "check-before-commit": "turbo run lint check-types --filter=...[origin/main]",
-    "check-before-push": "turbo run build --filter=...[origin/main]"
+    "check-before-commit": "turbo run lint check-types --filter=...[origin/dev]",
+    "check-before-push": "turbo run build --filter=...[origin/dev]",
+    "prepare": "husky install"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
+    "@next/bundle-analyzer": "^15.3.3",
     "husky": "^9.1.7",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
@@ -24,9 +27,6 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@radix-ui/react-slot": "^1.2.3",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
     "tailwind-merge": "^3.3.0",
     "tailwindcss": "^4.1.5",
     "tailwindcss-animate": "^1.0.7"
