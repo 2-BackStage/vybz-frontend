@@ -1,0 +1,115 @@
+name: Frontend CI/CD Docker Deploy to EC2
+
+on:
+  push:
+    branches: [ hotfix2 ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+     # 1. GitHub 리포지토리 체크아웃
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+       # 2. Docker Hub 로그인
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}     
+
+      # Docker Build 전에 user .env 파일 생성
+      - name: Create .env file for Docker Build - user
+        run: |
+          cat <<EOF > .env.user
+          NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}
+          NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
+          KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
+          BASE_URL=${{ secrets.BASE_URL }}
+          BASE_API_URL=${{ secrets.BASE_API_URL }}
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION=${{ secrets.AWS_REGION }}
+          AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}
+          EOF  
+
+      # Docker Build 전에 busker .env 파일 생성
+      - name: Create .env file for Docker Build - busker
+        run: |
+          cat <<EOF > .env.busker
+          NEXTAUTH_URL=${{ secrets.BUSKER_NEXTAUTH_URL }}
+          NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
+          BASE_URL=${{ secrets.BASE_URL }}
+          BASE_API_URL=${{ secrets.BASE_API_URL }}
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION=${{ secrets.AWS_REGION }}
+          AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}
+          EOF  
+
+      # 3. 도커 이미지 빌드 & 푸시 - front
+      - name: Build & Push front-service
+        run: |
+          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/front-service:${{ github.sha }} .
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/front-service:${{ github.sha }}       
+
+
+      # 4. EC2에 SSH 접속 & 배포
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/vybz/front-service
+            
+            export FRONT_IMAGE_TAG=${{ github.sha }}
+
+            docker-compose down
+            docker-compose rm -f
+            
+            docker images "${{ secrets.DOCKER_HUB_USERNAME }}/front-service" --format "{{.ID}}" | uniq | tail -n +2 | xargs -r docker rmi -f
+            
+            docker image prune -af
+            
+            docker-compose pull 
+
+            cp .env.user .env && docker-compose up -d front-user
+
+            cp .env.busker .env && docker-compose up -d front-busker
+
+            docker-compose up -d front-admin
+
+      # 5-1. 성공 시 알림
+      - name: Send Discord Success Notification
+        if: success()
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_BACK }}
+        with:
+          args: |
+            ✅ [${{ github.actor }}]님이 `${{ github.repository }}` 레포지토리에서 **배포를 완료**했어요!
+            🔗 커밋: ${{ github.sha }}
+
+      # 5-2. 실패 시 알림
+      - name: Send Discord Failure Notification
+        if: failure()
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_BACK }}
+        with:
+          args: |
+            ❌ [${{ github.actor }}]님이 `${{ github.repository }}` 레포지토리에서 **배포에 실패**했어요!
+            🔍 에러 로그를 확인해주세요.
+    
