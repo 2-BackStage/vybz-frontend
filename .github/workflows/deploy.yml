@@ -96,7 +96,7 @@ jobs:
         if: success()
         uses: Ilshidur/action-discord@master
         env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_BACK }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_FRONT }}
         with:
           args: |
             ✅ [${{ github.actor }}]님이 `${{ github.repository }}` 레포지토리에서 **배포를 완료**했어요!
@@ -107,7 +107,7 @@ jobs:
         if: failure()
         uses: Ilshidur/action-discord@master
         env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_BACK }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_FRONT }}
         with:
           args: |
             ❌ [${{ github.actor }}]님이 `${{ github.repository }}` 레포지토리에서 **배포에 실패**했어요!
