@@ -9,7 +9,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-     # 1. GitHub 리포지토리 체크아웃
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -18,21 +17,17 @@ jobs:
         with:
           node-version: 20
 
-       # 2. Docker Hub 로그인
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_PASSWORD }}     
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
-      # 3. 도커 이미지 빌드 & 푸시 - front
       - name: Build & Push front-service
         run: |
           docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/front-service:${{ github.sha }} .
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/front-service:${{ github.sha }}       
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/front-service:${{ github.sha }}
 
-
-      # 4. EC2에 SSH 접속 & 배포
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -42,51 +37,45 @@ jobs:
           script: |
             cd ~/vybz/front-service
 
-            echo "[1/6] 환경변수 파일 생성"
-            # user .env.user 생성
-            cat <<EOF > .env.user
-            NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}
-            NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
-            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-            KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
-            KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
-            BASE_URL=${{ secrets.BASE_URL }}
-            BASE_API_URL=${{ secrets.BASE_API_URL }}
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            AWS_REGION=${{ secrets.AWS_REGION }}
-            AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}
-            EOF  
+            echo "[1] .env.user 생성"
+            echo "NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}" > .env.user
+            echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" >> .env.user
+            echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env.user
+            echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env.user
+            echo "KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}" >> .env.user
+            echo "KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}" >> .env.user
+            echo "BASE_URL=${{ secrets.BASE_URL }}" >> .env.user
+            echo "BASE_API_URL=${{ secrets.BASE_API_URL }}" >> .env.user
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env.user
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env.user
+            echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env.user
+            echo "AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}" >> .env.user
 
-            # busker용 .env.busker 생성
-            cat <<EOF > .env.busker
-            NEXTAUTH_URL=${{ secrets.BUSKER_NEXTAUTH_URL }}
-            NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
-            BASE_URL=${{ secrets.BASE_URL }}
-            BASE_API_URL=${{ secrets.BASE_API_URL }}
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            AWS_REGION=${{ secrets.AWS_REGION }}
-            AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}
-            EOF  
-              
+            echo "[2] .env.busker 생성"
+            echo "NEXTAUTH_URL=${{ secrets.BUSKER_NEXTAUTH_URL }}" > .env.busker
+            echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" >> .env.busker
+            echo "BASE_URL=${{ secrets.BASE_URL }}" >> .env.busker
+            echo "BASE_API_URL=${{ secrets.BASE_API_URL }}" >> .env.busker
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env.busker
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env.busker
+            echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env.busker
+            echo "AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}" >> .env.busker
+
+            echo "[3] 컨테이너 정리"
             docker-compose down
             docker-compose rm -f
-            
+
+            echo "[4] 이미지 정리"
             docker images "${{ secrets.DOCKER_HUB_USERNAME }}/front-service" --format "{{.ID}}" | uniq | tail -n +2 | xargs -r docker rmi -f
-            
             docker image prune -af
-            
+
+            echo "[5] 재시작"
             export FRONT_IMAGE_TAG=${{ github.sha }}
-
-            docker-compose pull 
-
+            docker-compose pull
             docker-compose up -d front-user
             docker-compose up -d front-busker
             docker-compose up -d front-admin
 
-      # 5-1. 성공 시 알림
       - name: Send Discord Success Notification
         if: success()
         uses: Ilshidur/action-discord@master
@@ -97,7 +86,6 @@ jobs:
             ✅ [${{ github.actor }}]님이 `${{ github.repository }}` 레포지토리에서 **배포를 완료**했어요!
             🔗 커밋: ${{ github.sha }}
 
-      # 5-2. 실패 시 알림
       - name: Send Discord Failure Notification
         if: failure()
         uses: Ilshidur/action-discord@master
@@ -107,4 +95,3 @@ jobs:
           args: |
             ❌ [${{ github.actor }}]님이 `${{ github.repository }}` 레포지토리에서 **배포에 실패**했어요!
             🔍 에러 로그를 확인해주세요.
-    
