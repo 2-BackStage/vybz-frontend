@@ -17,7 +17,7 @@ RUN pnpm install
 
 # 빌드 실행
 #RUN turbo run build --filter=user --filter=busker --filter=admin
-RUN turbo run build --filter=user --filter=busker --filter=admin || true
+RUN turbo run build --filter=user --filter=busker --filter=admin
 
 
 # 2단계: Run Stage
