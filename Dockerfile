@@ -6,6 +6,10 @@ WORKDIR /app
 # 코드 복사
 COPY . .
 
+RUN echo "NEXTAUTH_SECRET=dummy" > .env \
+  && echo "BASE_API_URL=https://dummy.api" >> .env \
+  && echo "NEXTAUTH_URL=http://localhost:3000" >> .env
+
 # corepack 기반 pnpm 활성화
 RUN corepack enable && corepack prepare pnpm@8.15.6 --activate
 
