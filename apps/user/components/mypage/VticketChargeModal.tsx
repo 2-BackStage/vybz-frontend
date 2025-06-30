@@ -13,6 +13,9 @@ interface VticketChargeModalProps {
 }
 
 export default function VticketChargeModal({ onClose, userUuid }: VticketChargeModalProps) {
+
+    console.log("🧾 VticketChargeModal의 userUuid:", userUuid);
+
   const [selected, setSelected] = useState<number | null>(null);
   const [custom, setCustom] = useState<string>("");
 
