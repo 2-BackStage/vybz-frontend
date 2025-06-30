@@ -17,7 +17,6 @@ export const options: NextAuthOptions = {
           return null;
         }
 
-        //console.log('credentials', credentials);
         try {
           const response = await fetch(
             `${process.env.BASE_API_URL}/busker-auth-service/api/v1/busker/sign-in`,

@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       new URL('https://lh3.googleusercontent.com/**'),
+      new URL('http://k.kakaocdn.net/**'),
       new URL('https://k.kakaocdn.net/**'),
       new URL('https://vybz.s3.ap-northeast-2.amazonaws.com/**'),
     ],

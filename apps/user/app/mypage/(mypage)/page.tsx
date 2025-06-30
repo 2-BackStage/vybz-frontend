@@ -13,11 +13,11 @@ import { options } from '@/app/api/auth/[...nextauth]/options';
 export default async function page() {
   const session = await getServerSession(options);
   const userInfo = await getUserInfo(session?.user?.userUuid || '');
-  console.log(session);
+  
   return (
     <main>
       <UserProfile userInfo={userInfo} />
-      <Vticket vticketCount={userInfo.vticketCount} />
+      <Vticket vticketCount={userInfo.vticketCount} userUuid={session?.user.userUuid || ''} />
       <MypageButtonBox userInfo={userInfo} />
       <UseModal>
         <FanFeedSection initialFeeds={FanFeedData} />

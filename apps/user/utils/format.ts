@@ -22,8 +22,12 @@ export function formatNumberToKm(num: number): string {
   return num.toString();
 }
 
-export function formatAmount(amount: number, unit: string): string {
-  return amount.toLocaleString('ko-KR') + unit;
+// export function formatAmount(amount: number, unit: string): string {
+//   return amount.toLocaleString('ko-KR') + unit;
+// }
+
+export function formatAmount(amount: number | undefined | null, unit: string): string {
+  return (typeof amount === 'number' ? amount : 0).toLocaleString('ko-KR') + unit;
 }
 
 export function categorizeAndFormatDate(dateString: string) {

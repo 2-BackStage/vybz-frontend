@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { PurchaseHistoryDataType } from '@/types/ResponseDataTypes';
+import { PaymentHistoryItem } from '@/types/ResponseDataTypes';
 import { formatAmount } from '@/utils/format';
 
 export default function PurchaseHistoryItem({
@@ -7,13 +7,14 @@ export default function PurchaseHistoryItem({
   groupedData,
 }: {
   date: string;
-  groupedData: Record<string, PurchaseHistoryDataType[]>;
+  groupedData: Record<string, PaymentHistoryItem[]>;
 }) {
   return (
     <>
       <div className="text-sm text-gray-400 my-3 font-medium">{date}</div>
       <div className="space-y-4">
         {groupedData[date]?.map((history, index) => (
+          
           <div
             key={`${date}-${index}`}
             className="flex items-center justify-between"
@@ -29,7 +30,7 @@ export default function PurchaseHistoryItem({
 
             <div className="flex-1 mx-4">
               <p className=" font-semibold text-gray-600">
-                {formatAmount(history.vticketCount, '장')}
+                {formatAmount(history.ticketCount, '장')}
               </p>
             </div>
 
