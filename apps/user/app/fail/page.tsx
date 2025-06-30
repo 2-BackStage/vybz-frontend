@@ -1,6 +1,6 @@
 // app/fail/page.tsx
 import { Suspense } from 'react';
-import FailPage from './FailPage';
+import FailPage from '../../components/payment/FailPage';
 import { getServerSession } from 'next-auth/next';
 import { options } from '../api/auth/[...nextauth]/options';
 

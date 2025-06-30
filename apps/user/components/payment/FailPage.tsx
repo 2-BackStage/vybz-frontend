@@ -2,19 +2,17 @@
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 
-export default function FailPage(userUuid : {userUuid: string}) {
+export default function FailPage({ userUuid }: { userUuid: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { data: session, status } = useSession();
 
   const orderId = searchParams.get('orderId');
   const code = searchParams.get('code');
   const message = searchParams.get('message');
 
   useEffect(() => {
-    if (status === 'authenticated' && userUuid && orderId && code && message) {
+    if (userUuid && orderId && code && message) {
       fetch('https://back.vybz.kr/payment-service/api/v1/payment/fail-log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -26,12 +24,7 @@ export default function FailPage(userUuid : {userUuid: string}) {
         }),
       }).catch((err) => console.error('❌ 실패 로그 전송 실패:', err));
     }
-  }, [status, userUuid, orderId, code, message]);
-
-  if (status === 'loading') {
-    return <div className="text-white text-center">세션 로딩 중...</div>;
-  }
-
+  }, [userUuid, orderId, code, message]);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
       <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-8 flex flex-col items-center">

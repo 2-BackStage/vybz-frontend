@@ -2,17 +2,19 @@
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
 
-export default function SuccessPage(userUuid : {userUuid:string}) {
+interface SuccessPageProps {
+  userUuid: string;
+}
+
+export default function SuccessPage({ userUuid }: SuccessPageProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { data: session, status } = useSession();
 
   const orderId = searchParams.get('orderId');
   const paymentKey = searchParams.get('paymentKey');
   const amount = searchParams.get('amount');
-  
+
   const [confirmed, setConfirmed] = useState(false);
 
   useEffect(() => {
@@ -37,10 +39,6 @@ export default function SuccessPage(userUuid : {userUuid:string}) {
         });
     }
   }, [orderId, paymentKey, amount, userUuid]);
-
-  if (status === 'loading') {
-    return <div className="text-center text-white">세션 불러오는 중...</div>;
-  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">

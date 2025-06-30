@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import SuccessPage from './SuccessPage';
+import SuccessPage from '../../components/payment/SuccessPage';
 import { getServerSession } from 'next-auth/next';
 import { options } from '../api/auth/[...nextauth]/options';
 
