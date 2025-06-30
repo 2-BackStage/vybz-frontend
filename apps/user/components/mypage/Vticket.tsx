@@ -6,8 +6,6 @@ import { useState } from 'react';
 import VticketChargeModal from './VticketChargeModal';
 
 export default function Vticket({ vticketCount, userUuid }: { vticketCount: number, userUuid: string }) {
-
-   console.log("🔥 Vticket에 전달된 userUuid:", userUuid);
   
   const [open, setOpen] = useState(false);
 

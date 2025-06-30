@@ -9,8 +9,6 @@ interface PaymentButtonProps {
 }
 
 const PaymentButton: React.FC<PaymentButtonProps> = ({ amount, tickets, userUuid }) => {
-
-   console.log("✅ 전달된 userUuid:", userUuid); // 👉 확인용
    
   const handleClick = async () => {
     const res = await fetch("https://back.vybz.kr/payment-service/api/v1/payment", {

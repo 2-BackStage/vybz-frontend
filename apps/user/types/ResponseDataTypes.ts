@@ -158,7 +158,7 @@ export type UseHistoryDataType = {
 
 export type HistoryDataType = {
  type: 'purchase' | 'use';
- data: PurchaseHistoryDataType[] | UseHistoryDataType[];
+ data: PaymentHistoryItem[] | UseHistoryDataType[];
  page: number;
  totalPages: number;
 }
@@ -208,3 +208,25 @@ export type PaymentResponseDataType = {
   checkoutUrl: string;
   orderId: string;
 }
+
+export type PaymentHistoryItem = {
+  amount: number;
+  ticketCount: number;
+  approvedAt: string;
+}
+
+export type PaymentHistoryResponse = {
+  type: string;
+  dtoList: PaymentHistoryItem[];
+  requestPageDTO: {
+    page: number;
+    size: number;
+  };
+  totalCount: number;
+  prev: boolean;
+  next: boolean;
+  prevPage: number;
+  nextPage: number;
+  totalPage: number;
+  current: number;
+};

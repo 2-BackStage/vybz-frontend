@@ -1,11 +1,12 @@
 import {
   HistoryDataType,
-  PurchaseHistoryDataType,
+  PaymentHistoryItem,
   UseHistoryDataType,
 } from '@/types/ResponseDataTypes';
 import PurchaseHistoryItem from '@/components/donations/PurchaseHistoryItem';
 import UseHistoryItem from '@/components/donations/UseHistoryItem';
 import PaginationController from '@/components/common/PaginationController';
+import dayjs from 'dayjs';
 
 export default function HistoryList({
   historyData,
@@ -14,14 +15,18 @@ export default function HistoryList({
 }) {
   const groupedData = historyData.data.reduce(
     (acc, history) => {
-      const date = history.date;
+      const date =
+      historyData.type === 'purchase'
+        ? dayjs((history as PaymentHistoryItem).approvedAt).format('YYYY-MM-DD')
+        : (history as UseHistoryDataType).date;
+        
       if (!acc[date]) {
         acc[date] = [];
       }
       acc[date].push(history);
       return acc;
     },
-    {} as Record<string, (PurchaseHistoryDataType | UseHistoryDataType)[]>
+    {} as Record<string, (PaymentHistoryItem | UseHistoryDataType)[]>
   );
 
   const sortedDates = Object.keys(groupedData).sort(
@@ -37,7 +42,7 @@ export default function HistoryList({
               <PurchaseHistoryItem
                 date={date}
                 groupedData={
-                  groupedData as Record<string, PurchaseHistoryDataType[]>
+                  groupedData as Record<string, PaymentHistoryItem[]>
                 }
               />
             ) : (
