@@ -17,6 +17,8 @@ RUN pnpm install
 
 # 빌드 실행
 #RUN turbo run build --filter=user --filter=busker --filter=admin
+RUN turbo run build --filter=user --filter=busker --filter=admin || true
+
 
 # 2단계: Run Stage
 FROM node:20-slim AS runner
@@ -34,14 +36,7 @@ COPY --from=builder /app .
 
 EXPOSE 3000 3001 3002
 
-# CMD ["sh", "-c", "npx concurrently --kill-others --names 'user,busker,admin' \
-#   'pnpm --filter=user start' \
-#   'pnpm --filter=busker start' \
-#   'pnpm --filter=admin start'"]
-
-CMD ["sh", "-c", "\
-  pnpm --filter=user build && pnpm --filter=busker build && pnpm --filter=admin build && \
-  npx concurrently --kill-others --names 'user,busker,admin' \
-    'pnpm --filter=user start' \
-    'pnpm --filter=busker start' \
-    'pnpm --filter=admin start'"]
+CMD ["sh", "-c", "npx concurrently --kill-others --names 'user,busker,admin' \
+  'pnpm --filter=user start' \
+  'pnpm --filter=busker start' \
+  'pnpm --filter=admin start'"]
