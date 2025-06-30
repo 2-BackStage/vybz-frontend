@@ -16,7 +16,7 @@ export default async function page() {
   return (
     <main>
       <UserProfile userInfo={userInfo} />
-      <Vticket vticketCount={userInfo.vticketCount} />
+      <Vticket vticketCount={userInfo.vticketCount} userUuid={userInfo.userUuid} />
       <MypageButtonBox userInfo={userInfo} />
       <UseModal>
         <FanFeedSection initialFeeds={FanFeedData} />

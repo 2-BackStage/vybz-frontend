@@ -125,6 +125,7 @@ export type FollowingsResponseDataType = {
 };
 
 export type UserInfoDataType = {
+  userUuid: string;
   nickname: string;
   profileImageUrl: string;
   followingCount: number;
@@ -203,3 +204,8 @@ export type ChatMessageListType = {
   hasNext: boolean;
   pageSize: number;
 };
+
+export type PaymentResponseDataType = {
+  checkoutUrl: string;
+  orderId: string;
+}
