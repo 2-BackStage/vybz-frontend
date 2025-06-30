@@ -1,11 +1,16 @@
 // app/fail/page.tsx
 import { Suspense } from 'react';
 import FailPage from './FailPage';
+import { getServerSession } from 'next-auth/next';
+import { options } from '../api/auth/[...nextauth]/options';
 
-export default function FailPageWrapper() {
+export default async function page() {
+
+const session = await getServerSession(options);
+
   return (
     <Suspense fallback={<div>로딩 중...</div>}>
-      <FailPage />
+      <FailPage userUuid={session?.user?.userUuid || ''} />
     </Suspense>
   );
 }

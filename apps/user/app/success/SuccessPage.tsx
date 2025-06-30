@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 
-export default function SuccessPage() {
+export default function SuccessPage(userUuid : {userUuid:string}) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -12,8 +12,7 @@ export default function SuccessPage() {
   const orderId = searchParams.get('orderId');
   const paymentKey = searchParams.get('paymentKey');
   const amount = searchParams.get('amount');
-
-  const userUuid = session?.user?.userUuid;
+  
   const [confirmed, setConfirmed] = useState(false);
 
   useEffect(() => {

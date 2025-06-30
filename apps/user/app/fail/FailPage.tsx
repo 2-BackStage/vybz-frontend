@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 
-export default function FailPage() {
+export default function FailPage(userUuid : {userUuid: string}) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -12,7 +12,6 @@ export default function FailPage() {
   const orderId = searchParams.get('orderId');
   const code = searchParams.get('code');
   const message = searchParams.get('message');
-  const userUuid = session?.user?.userUuid;
 
   useEffect(() => {
     if (status === 'authenticated' && userUuid && orderId && code && message) {
