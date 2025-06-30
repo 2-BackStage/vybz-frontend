@@ -10,7 +10,6 @@ export async function getUserInfo(userUuid: string): Promise<UserInfoDataType> {
     } catch (error) {
         console.error('Error in getUserInfo:', error);
         return {
-            userUuid: '',
             nickname: '',
             profileImageUrl: '',
             followingCount: 0,

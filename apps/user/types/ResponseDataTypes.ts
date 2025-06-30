@@ -125,7 +125,6 @@ export type FollowingsResponseDataType = {
 };
 
 export type UserInfoDataType = {
-  userUuid: string;
   nickname: string;
   profileImageUrl: string;
   followingCount: number;

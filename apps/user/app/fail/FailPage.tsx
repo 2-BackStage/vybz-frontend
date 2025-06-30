@@ -1,12 +1,34 @@
 'use client';
 
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 
 export default function FailPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { data: session } = useSession();
+
+  const orderId = searchParams.get('orderId');
   const code = searchParams.get('code');
   const message = searchParams.get('message');
+  const userUuid = session?.user?.userUuid;
+
+  useEffect(() => {
+    if (userUuid && orderId && code && message) {
+      // 실패 로그를 백엔드에 전송하고 싶을 경우
+      fetch('https://back.vybz.kr/payment-service/api/v1/payment/fail-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userUuid,
+          orderId,
+          code,
+          message,
+        }),
+      }).catch((err) => console.error('❌ 실패 로그 전송 실패:', err));
+    }
+  }, [userUuid, orderId, code, message]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
@@ -19,10 +41,15 @@ export default function FailPage() {
           ×
         </button>
         <div className="bg-red-400 rounded-full p-4 mb-4">
-          <svg width="48" height="48" fill="none"><circle cx="24" cy="24" r="24" fill="#f87171"/><path d="M16 16l16 16M32 16L16 32" stroke="#fff" strokeWidth="3" strokeLinecap="round"/></svg>
+          <svg width="48" height="48" fill="none">
+            <circle cx="24" cy="24" r="24" fill="#f87171" />
+            <path d="M16 16l16 16M32 16L16 32" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
+          </svg>
         </div>
         <h2 className="text-2xl font-bold text-center mb-4">결제에 실패하였습니다.</h2>
         <div className="w-full bg-gray-50 border rounded-xl p-6 mb-6">
+          <p className="text-gray-500 font-semibold mb-1">주문번호 :</p>
+          <p className="text-lg font-bold text-gray-700 mb-2">{orderId || '-'}</p>
           <p className="text-gray-500 font-semibold mb-1">에러코드 :</p>
           <p className="text-lg font-bold text-gray-700 mb-2">{code || '-'}</p>
           <p className="text-gray-500 font-semibold mb-1">에러메시지 :</p>

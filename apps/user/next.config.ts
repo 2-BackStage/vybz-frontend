@@ -13,10 +13,10 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: [
-      'lh3.googleusercontent.com',
-      'k.kakaocdn.net',
-      'vybz.s3.ap-northeast-2.amazonaws.com',
+    remotePatterns: [
+      new URL('https://lh3.googleusercontent.com/**'),
+      new URL('https://k.kakaocdn.net/**'),
+      new URL('https://vybz.s3.ap-northeast-2.amazonaws.com/**'),
     ],
   },
   experimental: {
