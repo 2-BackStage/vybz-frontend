@@ -7,7 +7,7 @@ import { useSession } from 'next-auth/react';
 export default function FailPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   const orderId = searchParams.get('orderId');
   const code = searchParams.get('code');
@@ -15,8 +15,7 @@ export default function FailPage() {
   const userUuid = session?.user?.userUuid;
 
   useEffect(() => {
-    if (userUuid && orderId && code && message) {
-      // 실패 로그를 백엔드에 전송하고 싶을 경우
+    if (status === 'authenticated' && userUuid && orderId && code && message) {
       fetch('https://back.vybz.kr/payment-service/api/v1/payment/fail-log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -28,7 +27,11 @@ export default function FailPage() {
         }),
       }).catch((err) => console.error('❌ 실패 로그 전송 실패:', err));
     }
-  }, [userUuid, orderId, code, message]);
+  }, [status, userUuid, orderId, code, message]);
+
+  if (status === 'loading') {
+    return <div className="text-white text-center">세션 로딩 중...</div>;
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">

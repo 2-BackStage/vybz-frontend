@@ -7,7 +7,7 @@ import { useSession } from 'next-auth/react';
 export default function SuccessPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   const orderId = searchParams.get('orderId');
   const paymentKey = searchParams.get('paymentKey');
@@ -38,6 +38,10 @@ export default function SuccessPage() {
         });
     }
   }, [orderId, paymentKey, amount, userUuid]);
+
+  if (status === 'loading') {
+    return <div className="text-center text-white">세션 불러오는 중...</div>;
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
