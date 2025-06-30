@@ -6,9 +6,16 @@ WORKDIR /app
 # 코드 복사
 COPY . .
 
-RUN echo "NEXTAUTH_SECRET=dummy" > .env \
-  && echo "BASE_API_URL=https://dummy.api" >> .env \
-  && echo "NEXTAUTH_URL=http://localhost:3000" >> .env
+# user 앱용 env
+RUN echo "NEXTAUTH_SECRET=dummy" > apps/user/.env \
+  && echo "BASE_API_URL=https://dummy.api" >> apps/user/.env \
+  && echo "NEXTAUTH_URL=http://localhost:3000" >> apps/user/.env
+
+# busker 앱용 env
+RUN echo "NEXTAUTH_SECRET=dummy" > apps/busker/.env \
+  && echo "BASE_API_URL=https://dummy.api" >> apps/busker/.env \
+  && echo "NEXTAUTH_URL=http://localhost:3001" >> apps/busker/.env
+
 
 # corepack 기반 pnpm 활성화
 RUN corepack enable && corepack prepare pnpm@8.15.6 --activate
