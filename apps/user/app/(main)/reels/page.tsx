@@ -6,6 +6,9 @@ import CommentDrawer from '@/components/reels/Comment/CommentDrawer';
 import { CommentsData } from '@/data/CommentData';
 import { getReelsVideos } from '@/services/reels-services/reels-services';
 
+// 동적 렌더링 강제 설정
+export const dynamic = 'force-dynamic';
+
 export default async function page() {
   const initialVideos = await getReelsVideos(10);
 

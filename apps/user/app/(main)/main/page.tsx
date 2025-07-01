@@ -6,6 +6,9 @@ import { CategoryData } from '@/data/categoryData';
 import { liveFreeViewData } from '@/data/swiperData';
 import { getReelsVideos } from '@/services/reels-services/reels-services';
 
+// 동적 렌더링 강제 설정
+export const dynamic = 'force-dynamic';
+
 export default async function page() {
   const DummyCategoryData = CategoryData;
   const DummyLiveFreeViewData = liveFreeViewData;

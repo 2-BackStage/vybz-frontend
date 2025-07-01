@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import TabButtonBox from '@/components/common/button/TabButtonBox';
 import HistoryList from '@/components/donations/HistoryList';
 import { fetchPaymentHistory } from '@/services/payment-services/payment-services';
@@ -17,7 +17,7 @@ export default function DonationsTabContainer({ userUuid }: DonationsTabContaine
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const fetchData = async (page: number = 1) => {
+  const fetchData = useCallback(async (page: number = 1) => {
     if (!userUuid) return;
     
     setLoading(true);
@@ -64,13 +64,13 @@ export default function DonationsTabContainer({ userUuid }: DonationsTabContaine
     } finally {
       setLoading(false);
     }
-  };
+  }, [userUuid, activeTab]);
 
   useEffect(() => {
     if (userUuid) {
       fetchData(currentPage);
     }
-  }, [userUuid, activeTab, currentPage]);
+  }, [userUuid, activeTab, currentPage, fetchData]);
 
   const handleTabChange = (tabIndex: number) => {
     setActiveTab(tabIndex);

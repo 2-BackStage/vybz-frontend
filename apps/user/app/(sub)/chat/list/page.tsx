@@ -4,6 +4,9 @@ import ChatSectionHeader from '@/components/common/layouts/header/ChatSectionHea
 import InfiniteChatList from '@/components/chat/InfiniteChatList';
 import { getChatList } from '@/services/chat-services/chat-list-services';
 
+// 동적 렌더링 강제 설정
+export const dynamic = 'force-dynamic';
+
 export default async function page() {
   const ChatListData = await getChatList();
   return (
