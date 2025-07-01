@@ -25,6 +25,8 @@ jobs:
 
       - name: Build & Push front-service
         run: |
+          echo "NEXT_PUBLIC_TOSS_CLIENT_KEY=${{ secrets.NEXT_PUBLIC_TOSS_CLIENT_KEY }}" >> .env.production
+
           docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/front-service:${{ github.sha }} .
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/front-service:${{ github.sha }}
 
