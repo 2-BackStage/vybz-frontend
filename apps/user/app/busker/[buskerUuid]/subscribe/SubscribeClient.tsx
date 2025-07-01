@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { loadTossPayments } from '@tosspayments/payment-sdk';
 import { v4 as uuidv4 } from 'uuid';
 
-const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY!;
 
 function generateRandomCustomerKey(): string {
   return `cus_${uuidv4().replace(/-/g, '')}`;
@@ -29,27 +28,29 @@ export default function SubscribeClient({
       alert('로그인이 필요합니다.');
       return;
     }
-    
-    try {console.log('userUuid',userUuid)
-      console.log('buskerUuid',buskerUuid)
-      console.log('price',price)
-      console.log('nickname',nickname)
-      console.log('profileUrl',profileUrl)
-      console.log('clientKey',clientKey)
+    const clientkey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || ''
+
+    try {
+      console.log('userUuid', userUuid)
+      console.log('buskerUuid', buskerUuid)
+      console.log('price', price)
+      console.log('nickname', nickname)
+      console.log('profileUrl', profileUrl)
+      console.log('clientKey', clientkey)
       const customerKey = generateRandomCustomerKey();
-      console.log('customerKey',customerKey)
-      const tossPayments = await loadTossPayments(clientKey);
-      
-      console.log('tossPayments',tossPayments);
+      console.log('customerKey', customerKey)
+      const tossPayments = await loadTossPayments(clientkey);
+
+      console.log('tossPayments', tossPayments);
 
       // 배포 환경에서 안전하게 origin 가져오기
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
-      console.log('origin',origin)
-      
+      console.log('origin', origin)
+
       if (!origin) {
         throw new Error('Origin을 가져올 수 없습니다.');
       }
-      
+
       tossPayments
         .requestBillingAuth('카드', {
           customerKey,

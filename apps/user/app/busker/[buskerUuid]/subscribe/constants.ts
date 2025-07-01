@@ -1,0 +1,1 @@
+export const clientkey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY
