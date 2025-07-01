@@ -15,7 +15,7 @@ export async function fetchDonationHistory(
   );
 
   if (!response.isSuccess) {
-    throw new Error(response.message || '결제 내역 조회 실패');
+    throw new Error(response.message || '후원 내역 조회 실패');
   }
 
   return response.result as UseHistoryResponse;

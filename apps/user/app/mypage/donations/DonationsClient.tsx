@@ -74,7 +74,7 @@ export default function DonationsClient({ userUuid }: DonationsClientProps) {
 
   const handleTabChange = (tabIndex: number) => {
     setActiveTab(tabIndex);
-    setCurrentPage(1); // 탭 변경 시 첫 페이지로 리셋
+    setCurrentPage(1); 
   };
 
   const handlePageChange = (page: number) => {
