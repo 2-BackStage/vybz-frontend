@@ -30,16 +30,16 @@ export default function SubscribeClient({
       return;
     }
     
-    try {
-      const customerKey = generateRandomCustomerKey();
-      const tossPayments = await loadTossPayments(clientKey);
-      console.log('userUuid',userUuid)
+    try {console.log('userUuid',userUuid)
       console.log('buskerUuid',buskerUuid)
       console.log('price',price)
       console.log('nickname',nickname)
       console.log('profileUrl',profileUrl)
       console.log('clientKey',clientKey)
+      const customerKey = generateRandomCustomerKey();
       console.log('customerKey',customerKey)
+      const tossPayments = await loadTossPayments(clientKey);
+      
       console.log('tossPayments',tossPayments);
 
       // 배포 환경에서 안전하게 origin 가져오기
