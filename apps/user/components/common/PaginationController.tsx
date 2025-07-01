@@ -8,26 +8,42 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@repo/ui/components/ui/pagination';
-import { fetchHistory } from '@/services/user-services/user-donations-services';
+
+interface PaginationControllerProps {
+  page: number;
+  totalPages: number;
+  onPageChange?: (page: number) => void;
+}
 
 export default function PaginationController({
   page,
   totalPages,
-}: {
-  page: number;
-  totalPages: number;
-}) {
+  onPageChange,
+}: PaginationControllerProps) {
   const goToPrev = () => {
-    if (page > 1) fetchHistory(page - 1);
+    if (page > 1 && onPageChange) {
+      onPageChange(page - 1);
+    }
   };
 
   const goToNext = () => {
-    if (page < totalPages) fetchHistory(page + 1);
+    if (page < totalPages && onPageChange) {
+      onPageChange(page + 1);
+    }
+  };
+
+  const handlePageClick = (targetPage: number) => {
+    if (onPageChange) {
+      onPageChange(targetPage);
+    }
   };
 
   const renderPageLink = (p: number) => (
     <PaginationItem key={p}>
-      <PaginationLink isActive={p === page} onClick={() => fetchHistory(p)}>
+      <PaginationLink 
+        isActive={p === page} 
+        onClick={() => handlePageClick(p)}
+      >
         {p}
       </PaginationLink>
     </PaginationItem>

@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { UseHistoryDataType } from '@/types/ResponseDataTypes';
+import { UseHistoryDataItem } from '@/types/ResponseDataTypes';
 import { formatAmount } from '@/utils/format';
 
 export default function UseHistoryItem({
@@ -7,7 +7,7 @@ export default function UseHistoryItem({
   groupedData,
 }: {
   date: string;
-  groupedData: Record<string, UseHistoryDataType[]>;
+  groupedData: Record<string, UseHistoryDataItem[]>;
 }) {
   return (
     <>
@@ -21,8 +21,8 @@ export default function UseHistoryItem({
             <div className="flex items-center space-x-3 flex-1">
               <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
                 <Image
-                  src={history.buskerProfileImage}
-                  alt={history.buskerName}
+                  src={history.profileImageUrl}
+                  alt={history.nickname}
                   width={40}
                   height={40}
                   className="w-full h-full object-cover"
@@ -30,7 +30,7 @@ export default function UseHistoryItem({
               </div>
 
               <div className="flex-1">
-                <h3 className="font-medium mb-1">{history.buskerName}</h3>
+                <h3 className="font-medium mb-1">{history.nickname}</h3>
                 <p className="text-xs text-gray-400 truncate">
                   {history.message}
                 </p>
@@ -45,7 +45,7 @@ export default function UseHistoryItem({
                 height={24}
               />
               <p className="text-sm">
-                {formatAmount(history.vticketCount, '장')}
+                {formatAmount(history.ticketCount, '장')}
               </p>
             </div>
           </div>

@@ -140,31 +140,6 @@ export interface OtherUserDataType extends UserInfoDataType {
   createdAt: string;
 }
 
-
-export type PurchaseHistoryDataType = {
-  id: string;
-  date: string;
-  vticketCount: number;
-  amount: number;
-}
-
-export type UseHistoryDataType = {
-  id: string;
-  date: string;
-  vticketCount: number;
-  buskerName: string;
-  buskerProfileImage: string;
-  buskerUuid: string;
-  message: string;
-}
-
-export type HistoryDataType = {
- type: 'purchase' | 'use';
- data: PaymentHistoryItem[] | UseHistoryDataType[];
- page: number;
- totalPages: number;
-}
-
 export type NotificationDataType = {
   id: string;
   date: string;
@@ -277,6 +252,7 @@ export type PaymentHistoryResponse = {
     page: number;
     size: number;
   };
+  pageNumList: number[];
   totalCount: number;
   prev: boolean;
   next: boolean;
@@ -285,3 +261,44 @@ export type PaymentHistoryResponse = {
   totalPage: number;
   current: number;
 };
+
+export type UseHistoryDataItem = {
+  buskerUuid: string;
+  nickname: string;
+  profileImageUrl: string;
+  ticketCount: number;
+  message: string;
+  donatedAt: string;
+}
+
+export type UseHistoryResponse = {
+  type: string;
+  dtoList: UseHistoryDataItem[];
+  requestPageDTO: {
+    page: number;
+    size: number;
+  };
+  pageNumList: number[];
+  totalCount: number;
+  prev: boolean;
+  next: boolean;
+  prevPage: number;
+  nextPage: number;
+  totalPage: number;
+  current: number;
+};
+
+export type HistoryDataType = {
+  type: 'purchase' | 'use';
+  data: PaymentHistoryItem[] | UseHistoryDataItem[];
+  page: number;
+  size: number;
+  totalCount: number;
+  totalPages: number;
+  pageNumList: number[];
+  prev: boolean;
+  next: boolean;
+  prevPage: number;
+  nextPage: number;
+  currentPage: number;
+ }

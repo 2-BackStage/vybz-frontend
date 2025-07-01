@@ -14,7 +14,6 @@ export default function PurchaseHistoryItem({
       <div className="text-sm text-gray-400 my-3 font-medium">{date}</div>
       <div className="space-y-4">
         {groupedData[date]?.map((history, index) => (
-          
           <div
             key={`${date}-${index}`}
             className="flex items-center justify-between"

@@ -1,32 +1,31 @@
 import {
   HistoryDataType,
   PaymentHistoryItem,
-  UseHistoryDataType,
+  UseHistoryDataItem,
 } from '@/types/ResponseDataTypes';
 import PurchaseHistoryItem from '@/components/donations/PurchaseHistoryItem';
 import UseHistoryItem from '@/components/donations/UseHistoryItem';
 import PaginationController from '@/components/common/PaginationController';
-import dayjs from 'dayjs';
 
 export default function HistoryList({
   historyData,
+  onPageChange
 }: {
   historyData: HistoryDataType;
+  onPageChange: (page: number) => void;
 }) {
   const groupedData = historyData.data.reduce(
     (acc, history) => {
-      const date =
-      historyData.type === 'purchase'
-        ? dayjs((history as PaymentHistoryItem).approvedAt).format('YYYY-MM-DD')
-        : (history as UseHistoryDataType).date;
-        
+      const date = historyData.type === 'purchase'
+      ? (history as PaymentHistoryItem).approvedAt
+      : (history as UseHistoryDataItem).donatedAt;
       if (!acc[date]) {
         acc[date] = [];
       }
       acc[date].push(history);
       return acc;
     },
-    {} as Record<string, (PaymentHistoryItem | UseHistoryDataType)[]>
+    {} as Record<string, (PaymentHistoryItem | UseHistoryDataItem)[]>
   );
 
   const sortedDates = Object.keys(groupedData).sort(
@@ -49,7 +48,7 @@ export default function HistoryList({
               <UseHistoryItem
                 date={date}
                 groupedData={
-                  groupedData as Record<string, UseHistoryDataType[]>
+                  groupedData as Record<string, UseHistoryDataItem[]>
                 }
               />
             )}
@@ -59,6 +58,7 @@ export default function HistoryList({
       <PaginationController
         page={historyData.page}
         totalPages={historyData.totalPages}
+        onPageChange={onPageChange}
       />
     </>
   );
