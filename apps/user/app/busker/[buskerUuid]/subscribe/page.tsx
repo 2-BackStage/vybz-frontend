@@ -3,8 +3,8 @@ import SubscribeClient from './SubscribeClient';
 import { getServerSession } from 'next-auth';
 import { options } from '@/app/api/auth/[...nextauth]/options';
 
-export default async function page({ params }: { params: { buskerUuid: string } }) {
-  const { buskerUuid } = params;
+export default async function Page({ params }: { params: Promise<{ buskerUuid: string }> }) {
+  const { buskerUuid } = await params;
 
   const buskerInfo = await getBuskerInfo(buskerUuid);
 

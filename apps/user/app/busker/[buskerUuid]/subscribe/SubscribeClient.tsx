@@ -29,18 +29,32 @@ export default function SubscribeClient({
       alert('로그인이 필요합니다.');
       return;
     }
-    const customerKey = generateRandomCustomerKey();
-    const tossPayments = await loadTossPayments(clientKey);
+    
+    try {
+      const customerKey = generateRandomCustomerKey();
+      const tossPayments = await loadTossPayments(clientKey);
 
-    tossPayments
-      .requestBillingAuth('카드', {
-        customerKey,
-        successUrl: `${window.location.origin}/subscription/success?customerKey=${customerKey}&userUuid=${userUuid}&buskerUuid=${buskerUuid}&price=${price}`,
-        failUrl: `${window.location.origin}/subscription/fail?userUuid=${userUuid}&buskerUuid=${buskerUuid}&price=${price}`,
-      })
-      .catch((err) => {
-        alert(err.message);
-      });
+      // 배포 환경에서 안전하게 origin 가져오기
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      
+      if (!origin) {
+        throw new Error('Origin을 가져올 수 없습니다.');
+      }
+      
+      tossPayments
+        .requestBillingAuth('카드', {
+          customerKey,
+          successUrl: `${origin}/subscription/success?customerKey=${customerKey}&userUuid=${userUuid}&buskerUuid=${buskerUuid}&price=${price}`,
+          failUrl: `${origin}/subscription/fail?userUuid=${userUuid}&buskerUuid=${buskerUuid}&price=${price}`,
+        })
+        .catch((err) => {
+          console.error('Toss SDK Error:', err);
+          alert(err.message);
+        });
+    } catch (error) {
+      console.error('Payment Error:', error);
+      alert('결제 초기화 중 오류가 발생했습니다.');
+    }
   };
 
   return (

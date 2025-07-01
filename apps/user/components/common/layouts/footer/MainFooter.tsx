@@ -12,6 +12,8 @@ export default function MainFooter() {
   const [activeIndex, setActiveIndex] = useState<number>(-1);
 
   useEffect(() => {
+    if (!pathname) return;
+    
     const index = FooterData.findIndex(
       ({ path }) => pathname === path || pathname.startsWith(`${path}/`)
     );

@@ -17,9 +17,9 @@ import SubscribeButton from './subscribe/SubscribeButton';
 export default async function Page({
   params,
 }: {
-  params: { buskerUuid: string };
+  params: Promise<{ buskerUuid: string }>;
 }) {
-  const { buskerUuid } = params;
+  const { buskerUuid } = await params;
   const session = await getServerSession(options);
   const [initialData, snsLinks, isFollowing] = await Promise.all([
     getBuskerInfo(buskerUuid),
