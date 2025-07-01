@@ -12,7 +12,9 @@
     "AWS_SECRET_ACCESS_KEY",
     "AWS_S3_BUCKET_NAME",
     "ANALYZE",
-    "NODE_ENV"
+    "NODE_ENV",
+    "NEXT_PUBLIC_TOSS_CLIENT_KEY",
+    "TOSS_SECRET_KEY"
   ],
   "tasks": {
     "build": {
