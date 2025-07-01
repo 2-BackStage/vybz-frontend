@@ -51,7 +51,7 @@ jobs:
             echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env.user
             echo "AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}" >> .env.user
             echo "NEXT_PUBLIC_TOSS_CLIENT_KEY=${{ secrets.NEXT_PUBLIC_TOSS_CLIENT_KEY }}" >> .env.user
-            echo "TOSS_SECRET_KEYL=${{ secrets.TOSS_SECRET_KEY }}" >> .env.user
+            echo "TOSS_SECRET_KEY=${{ secrets.TOSS_SECRET_KEY }}" >> .env.user
 
             echo "[2] .env.busker 생성"
             echo "NEXTAUTH_URL=${{ secrets.BUSKER_NEXTAUTH_URL }}" > .env.busker
