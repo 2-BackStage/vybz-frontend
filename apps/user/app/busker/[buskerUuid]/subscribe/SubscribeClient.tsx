@@ -33,9 +33,18 @@ export default function SubscribeClient({
     try {
       const customerKey = generateRandomCustomerKey();
       const tossPayments = await loadTossPayments(clientKey);
+      console.log('userUuid',userUuid)
+      console.log('buskerUuid',buskerUuid)
+      console.log('price',price)
+      console.log('nickname',nickname)
+      console.log('profileUrl',profileUrl)
+      console.log('clientKey',clientKey)
+      console.log('customerKey',customerKey)
+      console.log('tossPayments',tossPayments);
 
       // 배포 환경에서 안전하게 origin 가져오기
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      console.log('origin',origin)
       
       if (!origin) {
         throw new Error('Origin을 가져올 수 없습니다.');
