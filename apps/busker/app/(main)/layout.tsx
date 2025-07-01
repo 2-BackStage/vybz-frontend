@@ -1,8 +1,8 @@
 import MainFooter from '@/components/common/layout/footer/MainFooter';
 import MainHeader from '@/components/common/layout/header/MainHeader';
-import { getServerSession } from 'next-auth';
 import { options } from '@/app/api/auth/[...nextauth]/options';
 import { BuskerInfoReadService } from '@/services/info-services/BuskerInfoReadService';
+import { getServerSession } from 'next-auth';
 
 export default async function layout({
   children,

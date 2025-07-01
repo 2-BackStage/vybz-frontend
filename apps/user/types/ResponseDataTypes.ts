@@ -239,6 +239,18 @@ export type PaymentResponseDataType = {
   orderId: string;
 }
 
+export type ResponseBillingKeyDto = {
+  billingKey: string;
+}
+
+export type SubscriptionBillingResponse = {
+  billingKey: string;
+  customerKey: string;
+  userUuid: string;
+  buskerUuid: string;
+  price: number;
+}
+
 export type PaymentHistoryItem = {
   amount: number;
   ticketCount: number;

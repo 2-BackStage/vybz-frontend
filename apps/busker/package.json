@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@repo/ui": "workspace:*",
+    "@stomp/stompjs": "^7.1.1",
     "@tanstack/react-query": "^5.80.7",
     "dayjs": "^1.11.13",
     "framer-motion": "^12.16.0",
