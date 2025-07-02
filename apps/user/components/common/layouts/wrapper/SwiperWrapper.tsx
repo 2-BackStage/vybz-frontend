@@ -159,7 +159,7 @@ export default function SwiperWrapper({
                 profileImageUrl: data.profileImageUrl,
                 followingCount:
                   (data as BuskerInfoReadResponseType).followingCount || 0,
-                subscribeCount:
+                subscriptionCount:
                   (data as BuskerInfoReadResponseType).subscribeCount ||
                   (data as BuskerInfoReadResponseType).subscribedCount ||
                   0,
@@ -223,7 +223,7 @@ export default function SwiperWrapper({
                 nickname: '알 수 없음',
                 profileImageUrl: '/defaultprofile.png',
                 followingCount: 0,
-                subscribeCount: 0,
+                subscriptionCount: 0,
                 vticketCount: 0,
               };
             }

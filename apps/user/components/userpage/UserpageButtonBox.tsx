@@ -22,7 +22,7 @@ export default function UserpageButtonBox({
           height={300}
           className="absolute bottom-0 right-1/3 translate-x-1/2 w-28 h-28 opacity-20 object-cover pointer-events-none"
         />
-        <p className="font-bold text-2xl ml-3">{userInfo.subscribeCount}</p>
+        <p className="font-bold text-2xl ml-3">{userInfo.subscriptionCount}</p>
         <p className="ml-3">구독</p>
       </div>
 

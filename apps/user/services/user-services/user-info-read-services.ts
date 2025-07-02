@@ -13,7 +13,7 @@ export async function getUserInfo(userUuid: string): Promise<UserInfoDataType> {
             nickname: '',
             profileImageUrl: '',
             followingCount: 0,
-            subscribeCount: 0,
+            subscriptionCount: 0,
             vticketCount: 0,
         };
     }
