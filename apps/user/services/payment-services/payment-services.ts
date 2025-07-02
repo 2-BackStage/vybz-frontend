@@ -22,23 +22,55 @@ export async function fetchPaymentHistory(
 }
 
 export async function fetchActiveMemberships(userUuid: string): Promise<MemberShipType[]> {
-  const response = await instance.get<{ result: MemberShipType[] }>(
-    `/support-service/api/v1/membership/active/${userUuid}`,
-    { cache: 'no-store' }
-  );
-  if (!response.isSuccess) {
-    throw new Error(response.message || '구독중인 멤버십 조회 실패');
+  try {
+    const response = await instance.get<{ result: MemberShipType[] }>(
+      `/support-service/api/v1/membership/active/${userUuid}`,
+      { cache: 'no-store' }
+    );
+    
+    if (!response.isSuccess) {
+      console.error('활성 멤버십 조회 실패:', response.message);
+      return [];
+    }
+    
+    // 응답 구조 확인 및 안전한 반환
+    if (response.result && Array.isArray(response.result.result)) {
+      return response.result.result;
+    } else if (Array.isArray(response.result)) {
+      return response.result;
+    } else {
+      console.warn('예상과 다른 응답 구조:', response.result);
+      return [];
+    }
+  } catch (error) {
+    console.error('활성 멤버십 조회 중 오류:', error);
+    return [];
   }
-  return response.result.result;
 }
 
 export async function fetchExpiredMemberships(userUuid: string): Promise<MemberShipType[]> {
-  const response = await instance.get<{ result: MemberShipType[] }>(
-    `/support-service/api/v1/membership/expired/${userUuid}`,
-    { cache: 'no-store' }
-  );
-  if (!response.isSuccess) {
-    throw new Error(response.message || '만료된 멤버십 조회 실패');
+  try {
+    const response = await instance.get<{ result: MemberShipType[] }>(
+      `/support-service/api/v1/membership/expired/${userUuid}`,
+      { cache: 'no-store' }
+    );
+    
+    if (!response.isSuccess) {
+      console.error('만료된 멤버십 조회 실패:', response.message);
+      return [];
+    }
+    
+    // 응답 구조 확인 및 안전한 반환
+    if (response.result && Array.isArray(response.result.result)) {
+      return response.result.result;
+    } else if (Array.isArray(response.result)) {
+      return response.result;
+    } else {
+      console.warn('예상과 다른 응답 구조:', response.result);
+      return [];
+    }
+  } catch (error) {
+    console.error('만료된 멤버십 조회 중 오류:', error);
+    return [];
   }
-  return response.result.result;
 }

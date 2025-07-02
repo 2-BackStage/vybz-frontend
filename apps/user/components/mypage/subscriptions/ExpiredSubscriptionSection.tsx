@@ -8,6 +8,11 @@ export default function ExpiredSubscriptionSection({
 }: {
   subscriptions: ExtendedMemberShipType[];
 }) {
+  // 만료된 구독이 없으면 렌더링하지 않음
+  if (!subscriptions || subscriptions.length === 0) {
+    return null;
+  }
+
   return (
     <section className="px-4 py-6 pb-18">
       <h2 className="text-2xl font-bold mb-4">만료된 정기 구독</h2>
@@ -29,7 +34,7 @@ export default function ExpiredSubscriptionSection({
                 {sub.buskerNickname}
               </h3>
               <p className="text-sm text-gray-400">
-                {sub.months}개월 구독이 만료되었어요
+                {sub.displayText} 구독이 만료되었어요
               </p>
               <p className="text-sm text-gray-500">다시 응원해보는게 어때요?</p>
             </div>

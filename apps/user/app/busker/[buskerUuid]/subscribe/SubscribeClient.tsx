@@ -30,6 +30,11 @@ export default function SubscribeClient({
     }
     const clientkey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || ''
 
+    if (!clientkey) {
+      alert('결제 설정이 올바르지 않습니다. 관리자에게 문의해주세요.');
+      return;
+    }
+
     try {
       console.log('userUuid', userUuid)
       console.log('buskerUuid', buskerUuid)
@@ -59,11 +64,11 @@ export default function SubscribeClient({
         })
         .catch((err) => {
           console.error('Toss SDK Error:', err);
-          alert(err.message);
+          alert(`결제 초기화 실패: ${err.message}`);
         });
     } catch (error) {
       console.error('Payment Error:', error);
-      alert('결제 초기화 중 오류가 발생했습니다.');
+      alert('결제 초기화 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     }
   };
 

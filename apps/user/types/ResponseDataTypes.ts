@@ -329,5 +329,7 @@ export interface MemberShipType {
 export interface ExtendedMemberShipType extends MemberShipType {
   buskerNickname: string;
   profileImageUrl: string;
-  months: number
+  days: number;
+  months: number;
+  displayText: string;
 }

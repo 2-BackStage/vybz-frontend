@@ -75,6 +75,14 @@ export default function SuccessPage() {
       .then(() => {
         setMessage('🎉 결제 성공!');
         setCanCancel(true);
+        
+        // 구독 성공 시 localStorage 업데이트
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`subscription_${busker}`, JSON.stringify({
+            isSubscribed: true,
+            timestamp: Date.now()
+          }));
+        }
       })
       .catch((err) => {
         console.error('❌ 오류:', err);
@@ -83,18 +91,37 @@ export default function SuccessPage() {
   }, [params]);
 
   const handleCancel = async () => {
-    const res = await fetch('https://back.vybz.kr/support-service/api/v1/subscription', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userUuid, buskerUuid }),
-    });
+    try {
+      setMessage('구독 해지 중...');
+      const res = await fetch('https://back.vybz.kr/support-service/api/v1/subscription', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userUuid, buskerUuid }),
+      });
 
-    if (res.ok) {
-      setMessage('🛑 정기 구독이 정상적으로 해지되었습니다.');
-      setCanCancel(false);
-    } else {
-      const error = await res.json();
-      setMessage(`❌ 해지 실패: ${error.message || '알 수 없는 오류'}`);
+      if (res.ok) {
+        setMessage('🛑 정기 구독이 정상적으로 해지되었습니다.');
+        setCanCancel(false);
+        
+        // 구독 해지 시 localStorage 업데이트
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`subscription_${buskerUuid}`, JSON.stringify({
+            isSubscribed: false,
+            timestamp: Date.now()
+          }));
+        }
+        
+        // 구독 해지 성공 후 페이지 새로고침
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        const error = await res.json();
+        setMessage(`❌ 해지 실패: ${error.message || '알 수 없는 오류'}`);
+      }
+    } catch (error) {
+      console.error('구독 해지 중 오류:', error);
+      setMessage('❌ 구독 해지 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     }
   };
 
@@ -137,7 +164,12 @@ export default function SuccessPage() {
               정기 구독 해지하기
             </button>
             <button
-              onClick={() => router.push('/mypage/subscriptions')}
+              onClick={() => {
+                router.push('/mypage/subscriptions');
+                setTimeout(() => {
+                  window.location.reload();
+                }, 100);
+              }}
               className="w-full bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
             >
               구독 관리로 이동
