@@ -1,4 +1,4 @@
-import { PaymentHistoryResponse } from "@/types/ResponseDataTypes";
+import { MemberShipType, PaymentHistoryResponse } from "@/types/ResponseDataTypes";
 import { instance } from "@/utils/requestHandler";
 
 export async function fetchPaymentHistory(
@@ -19,4 +19,26 @@ export async function fetchPaymentHistory(
   }
 
   return response.result as PaymentHistoryResponse;
+}
+
+export async function fetchActiveMemberships(userUuid: string): Promise<MemberShipType[]> {
+  const response = await instance.get<{ result: MemberShipType[] }>(
+    `/support-service/api/v1/membership/active/${userUuid}`,
+    { cache: 'no-store' }
+  );
+  if (!response.isSuccess) {
+    throw new Error(response.message || '구독중인 멤버십 조회 실패');
+  }
+  return response.result.result;
+}
+
+export async function fetchExpiredMemberships(userUuid: string): Promise<MemberShipType[]> {
+  const response = await instance.get<{ result: MemberShipType[] }>(
+    `/support-service/api/v1/membership/expired/${userUuid}`,
+    { cache: 'no-store' }
+  );
+  if (!response.isSuccess) {
+    throw new Error(response.message || '만료된 멤버십 조회 실패');
+  }
+  return response.result.result;
 }

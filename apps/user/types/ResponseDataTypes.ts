@@ -130,7 +130,7 @@ export type UserInfoDataType = {
   nickname: string;
   profileImageUrl: string;
   followingCount: number;
-  subscribeCount: number;
+  subscriptionCount: number;
   vticketCount: number;
 }
 
@@ -314,3 +314,20 @@ export type HistoryDataType = {
   nextPage: number;
   currentPage: number;
  }
+
+export type MemberShipStatus = 'SUCCESS' | 'CANCELED';
+
+export interface MemberShipType {
+  userUuid: string;
+  buskerUuid: string;
+  price: number;
+  memberShipStatus: MemberShipStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ExtendedMemberShipType extends MemberShipType {
+  buskerNickname: string;
+  profileImageUrl: string;
+  months: number
+}

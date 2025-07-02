@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
-import SuccessPage from '../../components/payment/SuccessPage';
 import { getServerSession } from 'next-auth';
-import { options } from '../api/auth/[...nextauth]/options';
+import SuccessPage from '@/components/payment/SuccessPage';
+import { options } from '@/app/api/auth/[...nextauth]/options';
 
 export default async function page() {
 
